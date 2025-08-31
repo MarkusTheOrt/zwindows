@@ -1,5 +1,6 @@
 const windows = @import("windows.zig");
 const IUnknown = windows.IUnknown;
+const IUnknownInterface = windows.IUnknownInterface;
 const WINAPI = windows.WINAPI;
 const HRESULT = windows.HRESULT;
 const GUID = windows.GUID;
@@ -42,13 +43,7 @@ pub const BitmapPaletteType = enum(UINT) {
 pub const IPalette = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-        };
-    }
+    unknown: IUnknownInterface(@This()) = .{},
 
     pub const VTable = extern struct {
         base: IUnknown.VTable,
@@ -65,21 +60,21 @@ pub const IPalette = extern struct {
     };
 };
 
+pub fn IBitmapDecoderInterface(T: type) type {
+    return struct {
+        pub inline fn GetFrame(self: *@This(), index: UINT, frame: ?*?*IBitmapFrameDecode) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("bitmap_decoder", self));
+            return @as(*const IBitmapDecoder.VTable, @ptrCast(parent.__v))
+                .GetFrame(@as(*IBitmapDecoder, @ptrCast(parent)), index, frame);
+        }
+    };
+}
+
 pub const IBitmapDecoder = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-
-            pub inline fn GetFrame(self: *T, index: UINT, frame: ?*?*IBitmapFrameDecode) HRESULT {
-                return @as(*const IBitmapDecoder.VTable, @ptrCast(self.__v))
-                    .GetFrame(@as(*IBitmapDecoder, @ptrCast(self)), index, frame);
-            }
-        };
-    }
+    unknown: IUnknownInterface(@This()) = .{},
+    bitmap_decoder: IBitmapDecoderInterface(@This()) = .{},
 
     pub const VTable = extern struct {
         base: IUnknown.VTable,
@@ -97,35 +92,37 @@ pub const IBitmapDecoder = extern struct {
     };
 };
 
+pub fn IBitmapSourceInterface(T: type) type {
+    return struct {
+        pub inline fn GetSize(self: *@This(), width: *UINT, height: *UINT) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("bitmap_source", self));
+            return @as(*const IBitmapSource.VTable, @ptrCast(parent.__v))
+                .GetSize(@as(*IBitmapSource, @ptrCast(parent)), width, height);
+        }
+        pub inline fn GetPixelFormat(self: *@This(), guid: *PixelFormatGUID) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("bitmap_source", self));
+            return @as(*const IBitmapSource.VTable, @ptrCast(parent.__v))
+                .GetPixelFormat(@as(*IBitmapSource, @ptrCast(parent)), guid);
+        }
+        pub inline fn CopyPixels(
+            self: *@This(),
+            rect: ?*const Rect,
+            stride: UINT,
+            size: UINT,
+            buffer: [*]BYTE,
+        ) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("bitmap_source", self));
+            return @as(*const IBitmapSource.VTable, @ptrCast(parent.__v))
+                .CopyPixels(@as(*IBitmapSource, @ptrCast(parent)), rect, stride, size, buffer);
+        }
+    };
+}
+
 pub const IBitmapSource = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-
-            pub inline fn GetSize(self: *T, width: *UINT, height: *UINT) HRESULT {
-                return @as(*const IBitmapSource.VTable, @ptrCast(self.__v))
-                    .GetSize(@as(*IBitmapSource, @ptrCast(self)), width, height);
-            }
-            pub inline fn GetPixelFormat(self: *T, guid: *PixelFormatGUID) HRESULT {
-                return @as(*const IBitmapSource.VTable, @ptrCast(self.__v))
-                    .GetPixelFormat(@as(*IBitmapSource, @ptrCast(self)), guid);
-            }
-            pub inline fn CopyPixels(
-                self: *T,
-                rect: ?*const Rect,
-                stride: UINT,
-                size: UINT,
-                buffer: [*]BYTE,
-            ) HRESULT {
-                return @as(*const IBitmapSource.VTable, @ptrCast(self.__v))
-                    .CopyPixels(@as(*IBitmapSource, @ptrCast(self)), rect, stride, size, buffer);
-            }
-        };
-    }
+    unknown: IUnknownInterface(@This()) = .{},
+    bitmap_source: IBitmapSourceInterface(@This()) = .{},
 
     pub const VTable = extern struct {
         base: IUnknown.VTable,
@@ -140,13 +137,8 @@ pub const IBitmapSource = extern struct {
 pub const IBitmapFrameDecode = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IBitmapSource.Methods(T);
-        };
-    }
+    unknown: IUnknownInterface(@This()) = .{},
+    bitmap_source: IBitmapSourceInterface(@This()) = .{},
 
     pub const VTable = extern struct {
         base: IBitmapSource.VTable,
@@ -159,13 +151,8 @@ pub const IBitmapFrameDecode = extern struct {
 pub const IBitmap = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IBitmapSource.Methods(T);
-        };
-    }
+    unknown: IUnknownInterface(@This()) = .{},
+    bitmap_source: IBitmapSourceInterface(@This()) = .{},
 
     pub const VTable = extern struct {
         Lock: *anyopaque,
@@ -186,36 +173,37 @@ pub const BitmapDitherType = enum(UINT) {
     ErrorDiffusion = 0x8,
 };
 
+pub fn IFormatConverterInterface(T: type) type {
+    return struct {
+        pub inline fn Initialize(
+            self: *@This(),
+            source: ?*IBitmapSource,
+            dest_format: *const PixelFormatGUID,
+            dither: BitmapDitherType,
+            palette: ?*IPalette,
+            alpha_threshold_percent: f64,
+            palette_translate: BitmapPaletteType,
+        ) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("format_converter", self));
+            return @as(*const IFormatConverter.VTable, @ptrCast(parent.__v)).Initialize(
+                @as(*IFormatConverter, @ptrCast(parent)),
+                source,
+                dest_format,
+                dither,
+                palette,
+                alpha_threshold_percent,
+                palette_translate,
+            );
+        }
+    };
+}
+
 pub const IFormatConverter = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IBitmapSource.Methods(T);
-
-            pub inline fn Initialize(
-                self: *T,
-                source: ?*IBitmapSource,
-                dest_format: *const PixelFormatGUID,
-                dither: BitmapDitherType,
-                palette: ?*IPalette,
-                alpha_threshold_percent: f64,
-                palette_translate: BitmapPaletteType,
-            ) HRESULT {
-                return @as(*const IFormatConverter.VTable, @ptrCast(self.__v)).Initialize(
-                    @as(*IFormatConverter, @ptrCast(self)),
-                    source,
-                    dest_format,
-                    dither,
-                    palette,
-                    alpha_threshold_percent,
-                    palette_translate,
-                );
-            }
-        };
-    }
+    unknown: IUnknownInterface(@This()) = .{},
+    bitmap_source: IBitmapSourceInterface(@This()) = .{},
+    format_converter: IFormatConverterInterface(@This()) = .{},
 
     pub const VTable = extern struct {
         base: IBitmapSource.VTable,
@@ -232,38 +220,39 @@ pub const IFormatConverter = extern struct {
     };
 };
 
+pub fn IImagingFactoryInterface(T: type) type {
+    return extern struct {
+        pub inline fn CreateDecoderFromFilename(
+            self: *@This(),
+            filename: LPCWSTR,
+            vendor: ?*const GUID,
+            access: DWORD,
+            metadata: DecodeOptions,
+            decoder: ?*?*IBitmapDecoder,
+        ) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("imaging_factory", self));
+            return @as(*const IImagingFactory.VTable, @ptrCast(parent.__v)).CreateDecoderFromFilename(
+                @as(*IImagingFactory, @ptrCast(parent)),
+                filename,
+                vendor,
+                access,
+                metadata,
+                decoder,
+            );
+        }
+        pub inline fn CreateFormatConverter(self: *T, converter: ?*?*IFormatConverter) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("imaging_factory", self));
+            return @as(*const IImagingFactory.VTable, @ptrCast(parent.__v))
+                .CreateFormatConverter(@as(*IImagingFactory, @ptrCast(parent)), converter);
+        }
+    };
+}
+
 pub const IImagingFactory = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-
-            pub inline fn CreateDecoderFromFilename(
-                self: *T,
-                filename: LPCWSTR,
-                vendor: ?*const GUID,
-                access: DWORD,
-                metadata: DecodeOptions,
-                decoder: ?*?*IBitmapDecoder,
-            ) HRESULT {
-                return @as(*const IImagingFactory.VTable, @ptrCast(self.__v)).CreateDecoderFromFilename(
-                    @as(*IImagingFactory, @ptrCast(self)),
-                    filename,
-                    vendor,
-                    access,
-                    metadata,
-                    decoder,
-                );
-            }
-            pub inline fn CreateFormatConverter(self: *T, converter: ?*?*IFormatConverter) HRESULT {
-                return @as(*const IImagingFactory.VTable, @ptrCast(self.__v))
-                    .CreateFormatConverter(@as(*IImagingFactory, @ptrCast(self)), converter);
-            }
-        };
-    }
+    unknown: IUnknownInterface(@This()) = .{},
+    imaging_factory: IImagingFactoryInterface(@This()) = .{},
 
     pub const VTable = extern struct {
         base: IUnknown.VTable,
