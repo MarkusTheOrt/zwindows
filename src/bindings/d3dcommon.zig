@@ -88,17 +88,18 @@ pub const IID_IBlob = GUID.parse("{8BA5FB08-5195-40e2-AC58-0D989C3A0102}");
 pub const IBlob = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    blob: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-
-            pub inline fn GetBufferPointer(self: *T) *anyopaque {
-                return @as(*const IBlob.VTable, @ptrCast(self.__v)).GetBufferPointer(@as(*IBlob, @ptrCast(self)));
+            pub inline fn GetBufferPointer(self: *@This()) *anyopaque {
+                const parent: *T = @alignCast(@fieldParentPtr("blob", self));
+                return @as(*const IBlob.VTable, @ptrCast(parent.__v)).GetBufferPointer(@as(*IBlob, @ptrCast(parent)));
             }
-            pub inline fn GetBufferSize(self: *T) SIZE_T {
-                return @as(*const IBlob.VTable, @ptrCast(self.__v)).GetBufferSize(@as(*IBlob, @ptrCast(self)));
+            pub inline fn GetBufferSize(self: *@This()) SIZE_T {
+                const parent: *T = @alignCast(@fieldParentPtr("blob", self));
+                return @as(*const IBlob.VTable, @ptrCast(parent.__v)).GetBufferSize(@as(*IBlob, @ptrCast(parent)));
             }
         };
     }
