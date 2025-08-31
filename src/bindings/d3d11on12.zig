@@ -18,14 +18,13 @@ pub const RESOURCE_FLAGS = extern struct {
 pub const IDevice = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    device: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-
             pub inline fn CreateWrappedResource(
-                self: *T,
+                self: *@This(),
                 resource12: *IUnknown,
                 flags11: *const RESOURCE_FLAGS,
                 in_state: RESOURCE_STATES,
@@ -33,8 +32,9 @@ pub const IDevice = extern struct {
                 guid: *const GUID,
                 resource11: ?*?*anyopaque,
             ) HRESULT {
-                return @as(*const IDevice.VTable, @ptrCast(self.__v)).CreateWrappedResource(
-                    @as(*IDevice, @ptrCast(self)),
+                const parent: *T = @alignCast(@fieldParentPtr("device", self));
+                return @as(*const IDevice.VTable, @ptrCast(parent.__v)).CreateWrappedResource(
+                    @as(*IDevice, @ptrCast(parent)),
                     resource12,
                     flags11,
                     in_state,
@@ -44,20 +44,22 @@ pub const IDevice = extern struct {
                 );
             }
             pub inline fn ReleaseWrappedResources(
-                self: *T,
+                self: *@This(),
                 resources: [*]const *d3d11.IResource,
                 num_resources: UINT,
             ) void {
-                @as(*const IDevice.VTable, @ptrCast(self.__v))
-                    .ReleaseWrappedResources(@as(*IDevice, @ptrCast(self)), resources, num_resources);
+                const parent: *T = @alignCast(@fieldParentPtr("device", self));
+                @as(*const IDevice.VTable, @ptrCast(parent.__v))
+                    .ReleaseWrappedResources(@as(*IDevice, @ptrCast(parent)), resources, num_resources);
             }
             pub inline fn AcquireWrappedResources(
-                self: *T,
+                self: *@This(),
                 resources: [*]const *d3d11.IResource,
                 num_resources: UINT,
             ) void {
-                @as(*const IDevice.VTable, @ptrCast(self.__v))
-                    .AcquireWrappedResources(@as(*IDevice, @ptrCast(self)), resources, num_resources);
+                const parent: *T = @alignCast(@fieldParentPtr("device", self));
+                @as(*const IDevice.VTable, @ptrCast(parent.__v))
+                    .AcquireWrappedResources(@as(*IDevice, @ptrCast(parent)), resources, num_resources);
             }
         };
     }
@@ -81,13 +83,8 @@ pub const IDevice = extern struct {
 pub const IDevice1 = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IDevice.Methods(T);
-        };
-    }
+    unknown: IUnknown.Interface(@This()) = .{},
+    device: IDevice.Interface(@This()) = .{},
 
     pub const VTable = extern struct {
         base: IDevice.VTable,
@@ -98,13 +95,8 @@ pub const IDevice1 = extern struct {
 pub const IDevice2 = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IDevice1.Methods(T);
-        };
-    }
+    unknown: IUnknown.Interface(@This()) = .{},
+    device: IDevice.Interface(@This()) = .{},
 
     pub const VTable = extern struct {
         base: IDevice1.VTable,
