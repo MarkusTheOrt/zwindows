@@ -14,14 +14,14 @@ pub const GPU_BASED_VALIDATION_FLAGS = packed struct(UINT) {
 pub const IDebug = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    debug: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-
-            pub inline fn EnableDebugLayer(self: *T) void {
-                @as(*const IDebug.VTable, @ptrCast(self.__v)).EnableDebugLayer(@as(*IDebug, @ptrCast(self)));
+            pub inline fn EnableDebugLayer(self: *@This()) void {
+                const parent: *T = @alignCast(@fieldParentPtr("debug", self));
+                @as(*const IDebug.VTable, @ptrCast(parent.__v)).EnableDebugLayer(@as(*IDebug, @ptrCast(parent)));
             }
         };
     }
@@ -35,22 +35,24 @@ pub const IDebug = extern struct {
 pub const IDebug1 = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    debug1: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-
-            pub inline fn EnableDebugLayer(self: *T) void {
-                @as(*const IDebug1.VTable, @ptrCast(self.__v)).EnableDebugLayer(@as(*IDebug1, @ptrCast(self)));
+            pub inline fn EnableDebugLayer(self: *@This()) void {
+                const parent: *T = @alignCast(@fieldParentPtr("debug1", self));
+                @as(*const IDebug1.VTable, @ptrCast(parent.__v)).EnableDebugLayer(@as(*IDebug1, @ptrCast(parent)));
             }
-            pub inline fn SetEnableGPUBasedValidation(self: *T, enable: BOOL) void {
-                @as(*const IDebug1.VTable, @ptrCast(self.__v))
-                    .SetEnableGPUBasedValidation(@as(*IDebug1, @ptrCast(self)), enable);
+            pub inline fn SetEnableGPUBasedValidation(self: *@This(), enable: BOOL) void {
+                const parent: *T = @alignCast(@fieldParentPtr("debug1", self));
+                @as(*const IDebug1.VTable, @ptrCast(parent.__v))
+                    .SetEnableGPUBasedValidation(@as(*IDebug1, @ptrCast(parent)), enable);
             }
-            pub inline fn SetEnableSynchronizedCommandQueueValidation(self: *T, enable: BOOL) void {
-                @as(*const IDebug1.VTable, @ptrCast(self.__v))
-                    .SetEnableSynchronizedCommandQueueValidation(@as(*IDebug1, @ptrCast(self)), enable);
+            pub inline fn SetEnableSynchronizedCommandQueueValidation(self: *@This(), enable: BOOL) void {
+                const parent: *T = @alignCast(@fieldParentPtr("debug1", self));
+                @as(*const IDebug1.VTable, @ptrCast(parent.__v))
+                    .SetEnableSynchronizedCommandQueueValidation(@as(*IDebug1, @ptrCast(parent)), enable);
             }
         };
     }
@@ -66,15 +68,15 @@ pub const IDebug1 = extern struct {
 pub const IDebug2 = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    debug2: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-
-            pub inline fn SetGPUBasedValidationFlags(self: *T, flags: GPU_BASED_VALIDATION_FLAGS) void {
-                @as(*const IDebug2.VTable, @ptrCast(self.__v))
-                    .SetGPUBasedValidationFlags(@as(*IDebug2, @ptrCast(self)), flags);
+            pub inline fn SetGPUBasedValidationFlags(self: *@This(), flags: GPU_BASED_VALIDATION_FLAGS) void {
+                const parent: *T = @alignCast(@fieldParentPtr("debug2", self));
+                @as(*const IDebug2.VTable, @ptrCast(parent.__v))
+                    .SetGPUBasedValidationFlags(@as(*IDebug2, @ptrCast(parent)), flags);
             }
         };
     }
@@ -88,23 +90,26 @@ pub const IDebug2 = extern struct {
 pub const IDebug3 = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    debug: IDebug.Interface(@This()) = .{},
+    debug3: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IDebug.Methods(T);
-
-            pub inline fn SetEnableGPUBasedValidation(self: *T, enable: BOOL) void {
-                @as(*const IDebug3.VTable, @ptrCast(self.__v))
-                    .SetEnableGPUBasedValidation(@as(*IDebug3, @ptrCast(self)), enable);
+            pub inline fn SetEnableGPUBasedValidation(self: *@This(), enable: BOOL) void {
+                const parent: *T = @alignCast(@fieldParentPtr("debug3", self));
+                @as(*const IDebug3.VTable, @ptrCast(parent.__v))
+                    .SetEnableGPUBasedValidation(@as(*IDebug3, @ptrCast(parent)), enable);
             }
-            pub inline fn SetEnableSynchronizedCommandQueueValidation(self: *T, enable: BOOL) void {
-                @as(*const IDebug3.VTable, @ptrCast(self.__v))
-                    .SetEnableSynchronizedCommandQueueValidation(@as(*IDebug3, @ptrCast(self)), enable);
+            pub inline fn SetEnableSynchronizedCommandQueueValidation(self: *@This(), enable: BOOL) void {
+                const parent: *T = @alignCast(@fieldParentPtr("debug3", self));
+                @as(*const IDebug3.VTable, @ptrCast(parent.__v))
+                    .SetEnableSynchronizedCommandQueueValidation(@as(*IDebug3, @ptrCast(parent)), enable);
             }
-            pub inline fn SetGPUBasedValidationFlags(self: *T, flags: GPU_BASED_VALIDATION_FLAGS) void {
-                @as(*const IDebug3.VTable, @ptrCast(self.__v))
-                    .SetGPUBasedValidationFlags(@as(*IDebug3, @ptrCast(self)), flags);
+            pub inline fn SetGPUBasedValidationFlags(self: *@This(), flags: GPU_BASED_VALIDATION_FLAGS) void {
+                const parent: *T = @alignCast(@fieldParentPtr("debug3", self));
+                @as(*const IDebug3.VTable, @ptrCast(parent.__v))
+                    .SetGPUBasedValidationFlags(@as(*IDebug3, @ptrCast(parent)), flags);
             }
         };
     }
@@ -120,14 +125,16 @@ pub const IDebug3 = extern struct {
 pub const IDebug4 = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    debug: IDebug.Interface(@This()) = .{},
+    debug3: IDebug3.Interface(@This()) = .{},
+    debug4: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IDebug3.Methods(T);
-
-            pub inline fn DisableDebugLayer(self: *T) void {
-                @as(*const IDebug4.VTable, @ptrCast(self.__v)).DisableDebugLayer(@as(*IDebug4, @ptrCast(self)));
+            pub inline fn DisableDebugLayer(self: *@This()) void {
+                const parent: *T = @alignCast(@fieldParentPtr("debug4", self));
+                @as(*const IDebug4.VTable, @ptrCast(parent.__v)).DisableDebugLayer(@as(*IDebug4, @ptrCast(parent)));
             }
         };
     }
@@ -141,14 +148,17 @@ pub const IDebug4 = extern struct {
 pub const IDebug5 = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    debug: IDebug.Interface(@This()) = .{},
+    debug3: IDebug3.Interface(@This()) = .{},
+    debug4: IDebug4.Interface(@This()) = .{},
+    debug5: IDebug4.Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IDebug4.Methods(T);
-
-            pub inline fn SetEnableAutoName(self: *T, enable: BOOL) void {
-                @as(*const IDebug5.VTable, @ptrCast(self.__v)).SetEnableAutoName(@as(*IDebug5, @ptrCast(self)), enable);
+            pub inline fn SetEnableAutoName(self: *@This(), enable: BOOL) void {
+                const parent: *T = @alignCast(@fieldParentPtr("debug5", self));
+                @as(*const IDebug5.VTable, @ptrCast(parent.__v)).SetEnableAutoName(@as(*IDebug5, @ptrCast(parent)), enable);
             }
         };
     }
@@ -204,25 +214,28 @@ pub const INFO_QUEUE_FILTER = extern struct {
 pub const IInfoQueue = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    info_queue: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-
-            pub inline fn AddStorageFilterEntries(self: *T, filter: *INFO_QUEUE_FILTER) HRESULT {
-                return @as(*const IInfoQueue.VTable, @ptrCast(self.__v))
-                    .AddStorageFilterEntries(@as(*IInfoQueue, @ptrCast(self)), filter);
+            pub inline fn AddStorageFilterEntries(self: *@This(), filter: *INFO_QUEUE_FILTER) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("info_queue", self));
+                return @as(*const IInfoQueue.VTable, @ptrCast(parent.__v))
+                    .AddStorageFilterEntries(@as(*IInfoQueue, @ptrCast(parent)), filter);
             }
-            pub inline fn PushStorageFilter(self: *T, filter: *INFO_QUEUE_FILTER) HRESULT {
-                return @as(*const IInfoQueue.VTable, @ptrCast(self.__v))
-                    .PushStorageFilter(@as(*IInfoQueue, @ptrCast(self)), filter);
+            pub inline fn PushStorageFilter(self: *@This(), filter: *INFO_QUEUE_FILTER) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("info_queue", self));
+                return @as(*const IInfoQueue.VTable, @ptrCast(parent.__v))
+                    .PushStorageFilter(@as(*IInfoQueue, @ptrCast(parent)), filter);
             }
-            pub inline fn PopStorageFilter(self: *T) void {
-                @as(*const IInfoQueue.VTable, @ptrCast(self.__v)).PopStorageFilter(@as(*IInfoQueue, @ptrCast(self)));
+            pub inline fn PopStorageFilter(self: *@This()) void {
+                const parent: *T = @alignCast(@fieldParentPtr("info_queue", self));
+                @as(*const IInfoQueue.VTable, @ptrCast(parent.__v)).PopStorageFilter(@as(*IInfoQueue, @ptrCast(parent)));
             }
-            pub inline fn SetMuteDebugOutput(self: *T, mute: BOOL) void {
-                @as(*const IInfoQueue.VTable, @ptrCast(self.__v)).SetMuteDebugOutput(@as(*IInfoQueue, @ptrCast(self)), mute);
+            pub inline fn SetMuteDebugOutput(self: *@This(), mute: BOOL) void {
+                const parent: *T = @alignCast(@fieldParentPtr("info_queue", self));
+                @as(*const IInfoQueue.VTable, @ptrCast(parent.__v)).SetMuteDebugOutput(@as(*IInfoQueue, @ptrCast(parent)), mute);
             }
         };
     }
