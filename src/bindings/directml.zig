@@ -340,41 +340,44 @@ pub const IID_IObject = GUID.parse("{c8263aac-9e0c-4a2d-9b8e-007521a3317c}");
 pub const IObject = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    object: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-
             pub inline fn GetPrivateData(
-                self: *T,
+                self: *@This(),
                 guid: *const GUID,
                 data_size: *UINT,
                 data: ?*anyopaque,
             ) HRESULT {
-                return @as(*const IObject.VTable, @ptrCast(self.__v))
-                    .GetPrivateData(@as(*IObject, @ptrCast(self)), guid, data_size, data);
+                const parent: *T = @alignCast(@fieldParentPtr("object", self));
+                return @as(*const IObject.VTable, @ptrCast(parent.__v))
+                    .GetPrivateData(@as(*IObject, @ptrCast(parent)), guid, data_size, data);
             }
             pub inline fn SetPrivateData(
-                self: *T,
+                self: *@This(),
                 guid: *const GUID,
                 data_size: UINT,
                 data: ?*const anyopaque,
             ) HRESULT {
-                return @as(*const IObject.VTable, @ptrCast(self.__v))
-                    .SetPrivateData(@as(*IObject, @ptrCast(self)), guid, data_size, data);
+                const parent: *T = @alignCast(@fieldParentPtr("object", self));
+                return @as(*const IObject.VTable, @ptrCast(parent.__v))
+                    .SetPrivateData(@as(*IObject, @ptrCast(parent)), guid, data_size, data);
             }
             pub inline fn SetPrivateDataInterface(
-                self: *T,
+                self: *@This(),
                 guid: *const GUID,
                 data: ?*const IUnknown,
             ) HRESULT {
-                return @as(*const IObject.VTable, @ptrCast(self.__v))
-                    .SetPrivateDataInterface(@as(*IObject, @ptrCast(self)), guid, data);
+                const parent: *T = @alignCast(@fieldParentPtr("object", self));
+                return @as(*const IObject.VTable, @ptrCast(parent.__v))
+                    .SetPrivateDataInterface(@as(*IObject, @ptrCast(parent)), guid, data);
             }
-            pub inline fn SetName(self: *T, name: LPCWSTR) HRESULT {
-                return @as(*const IObject.VTable, @ptrCast(self.__v))
-                    .SetName(@as(*IObject, @ptrCast(self)), name);
+            pub inline fn SetName(self: *@This(), name: LPCWSTR) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("object", self));
+                return @as(*const IObject.VTable, @ptrCast(parent.__v))
+                    .SetName(@as(*IObject, @ptrCast(parent)), name);
             }
         };
     }
@@ -392,15 +395,16 @@ pub const IID_IDeviceChild = GUID.parse("{27e83142-8165-49e3-974e-2fd66e4cb69d}"
 pub const IDeviceChild = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    object: IObject.Interface(@This()) = .{},
+    device_child: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IObject.Methods(T);
-
-            pub inline fn GetDevice(self: *T, guid: *const GUID, device: *?*anyopaque) HRESULT {
-                return @as(*const IDeviceChild.VTable, @ptrCast(self.__v))
-                    .GetDevice(@as(*IDeviceChild, @ptrCast(self)), guid, device);
+            pub inline fn GetDevice(self: *@This(), guid: *const GUID, device: *?*anyopaque) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("device_child", self));
+                return @as(*const IDeviceChild.VTable, @ptrCast(parent.__v))
+                    .GetDevice(@as(*IDeviceChild, @ptrCast(parent)), guid, device);
             }
         };
     }
@@ -415,13 +419,9 @@ pub const IID_IPageable = GUID.parse("{b1ab0825-4542-4a4b-8617-6dde6e8f6201}");
 pub const IPageable = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IDeviceChild.Methods(T);
-        };
-    }
+    unknown: IUnknown.Interface(@This()) = .{},
+    object: IObject.Interface(@This()) = .{},
+    device_child: IDeviceChild.Interface(@This()) = .{},
 
     pub const VTable = extern struct {
         base: IDeviceChild.VTable,
@@ -432,13 +432,9 @@ pub const IID_IOperator = GUID.parse("{26caae7a-3081-4633-9581-226fbe57695d}");
 pub const IOperator = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IDeviceChild.Methods(T);
-        };
-    }
+    unknown: IUnknown.Interface(@This()) = .{},
+    object: IObject.Interface(@This()) = .{},
+    device_child: IDeviceChild.Interface(@This()) = .{},
 
     pub const VTable = extern struct {
         base: IDeviceChild.VTable,
@@ -455,16 +451,18 @@ pub const IID_IDispatchable = GUID.parse("{dcb821a8-1039-441e-9f1c-b1759c2f3cec}
 pub const IDispatchable = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    object: IObject.Interface(@This()) = .{},
+    device_child: IDeviceChild.Interface(@This()) = .{},
+    dispatchable: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IPageable.Methods(T);
-
-            pub inline fn GetBindingProperties(self: *T) BINDING_PROPERTIES {
+            pub inline fn GetBindingProperties(self: *@This()) BINDING_PROPERTIES {
+                const parent: *T = @alignCast(@fieldParentPtr("dispatchable", self));
                 var properties: BINDING_PROPERTIES = undefined;
-                _ = @as(*const IDispatchable.VTable, @ptrCast(self.__v))
-                    .GetBindingProperties(@as(*IDispatchable, @ptrCast(self)), &properties);
+                _ = @as(*const IDispatchable.VTable, @ptrCast(parent.__v))
+                    .GetBindingProperties(@as(*IDispatchable, @ptrCast(parent)), &properties);
                 return properties;
             }
         };
@@ -483,13 +481,10 @@ pub const IID_ICompiledOperator = GUID.parse("{6b15e56a-bf5c-4902-92d8-da3a650af
 pub const ICompiledOperator = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IDispatchable.Methods(T);
-        };
-    }
+    unknown: IUnknown.Interface(@This()) = .{},
+    object: IObject.Interface(@This()) = .{},
+    device_child: IDeviceChild.Interface(@This()) = .{},
+    dispatchable: IDispatchable.Interface(@This()) = .{},
 
     pub const VTable = extern struct {
         base: IDispatchable.VTable,
@@ -500,15 +495,18 @@ pub const IID_IOperatorInitializer = GUID.parse("{427c1113-435c-469c-8676-4d5dd0
 pub const IOperatorInitializer = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    object: IObject.Interface(@This()) = .{},
+    device_child: IDeviceChild.Interface(@This()) = .{},
+    dispatchable: IDispatchable.Interface(@This()) = .{},
+    operator_initializer: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IDispatchable.Methods(T);
-
-            pub inline fn Reset(self: *T, num_operators: UINT, operators: [*]const *ICompiledOperator) HRESULT {
-                return @as(*const IOperatorInitializer.VTable, @ptrCast(self.__v))
-                    .Reset(@as(*IOperatorInitializer, @ptrCast(self)), num_operators, operators);
+            pub inline fn Reset(self: *@This(), num_operators: UINT, operators: [*]const *ICompiledOperator) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("operator_initializer", self));
+                return @as(*const IOperatorInitializer.VTable, @ptrCast(parent.__v))
+                    .Reset(@as(*IOperatorInitializer, @ptrCast(parent)), num_operators, operators);
             }
         };
     }
@@ -545,31 +543,37 @@ pub const IID_IBindingTable = GUID.parse("{29c687dc-de74-4e3b-ab00-1168f2fc3cfc}
 pub const IBindingTable = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    object: IObject.Interface(@This()) = .{},
+    device_child: IDeviceChild.Interface(@This()) = .{},
+    binding_table: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IDeviceChild.Methods(T);
-
-            pub inline fn BindInputs(self: *T, num: UINT, bindings: ?[*]const BINDING_DESC) void {
-                @as(*const IBindingTable.VTable, @ptrCast(self.__v))
-                    .BindInputs(@as(*IBindingTable, @ptrCast(self)), num, bindings);
+            pub inline fn BindInputs(self: *@This(), num: UINT, bindings: ?[*]const BINDING_DESC) void {
+                const parent: *T = @alignCast(@fieldParentPtr("binding_table", self));
+                @as(*const IBindingTable.VTable, @ptrCast(parent.__v))
+                    .BindInputs(@as(*IBindingTable, @ptrCast(parent)), num, bindings);
             }
-            pub inline fn BindOutputs(self: *T, num: UINT, bindings: ?[*]const BINDING_DESC) void {
-                @as(*const IBindingTable.VTable, @ptrCast(self.__v))
-                    .BindOutputs(@as(*IBindingTable, @ptrCast(self)), num, bindings);
+            pub inline fn BindOutputs(self: *@This(), num: UINT, bindings: ?[*]const BINDING_DESC) void {
+                const parent: *T = @alignCast(@fieldParentPtr("binding_table", self));
+                @as(*const IBindingTable.VTable, @ptrCast(parent.__v))
+                    .BindOutputs(@as(*IBindingTable, @ptrCast(parent)), num, bindings);
             }
-            pub inline fn BindTemporaryResource(self: *T, binding: ?*const BINDING_DESC) void {
-                @as(*const IBindingTable.VTable, @ptrCast(self.__v))
-                    .BindTemporaryResource(@as(*IBindingTable, @ptrCast(self)), binding);
+            pub inline fn BindTemporaryResource(self: *@This(), binding: ?*const BINDING_DESC) void {
+                const parent: *T = @alignCast(@fieldParentPtr("binding_table", self));
+                @as(*const IBindingTable.VTable, @ptrCast(parent.__v))
+                    .BindTemporaryResource(@as(*IBindingTable, @ptrCast(parent)), binding);
             }
-            pub inline fn BindPersistentResource(self: *T, binding: ?*const BINDING_DESC) void {
-                @as(*const IBindingTable.VTable, @ptrCast(self.__v))
-                    .BindPersistentResource(@as(*IBindingTable, @ptrCast(self)), binding);
+            pub inline fn BindPersistentResource(self: *@This(), binding: ?*const BINDING_DESC) void {
+                const parent: *T = @alignCast(@fieldParentPtr("binding_table", self));
+                @as(*const IBindingTable.VTable, @ptrCast(parent.__v))
+                    .BindPersistentResource(@as(*IBindingTable, @ptrCast(parent)), binding);
             }
-            pub inline fn Reset(self: *T, desc: ?*const BINDING_TABLE_DESC) HRESULT {
-                return @as(*const IBindingTable.VTable, @ptrCast(self.__v))
-                    .Reset(@as(*IBindingTable, @ptrCast(self)), desc);
+            pub inline fn Reset(self: *@This(), desc: ?*const BINDING_TABLE_DESC) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("binding_table", self));
+                return @as(*const IBindingTable.VTable, @ptrCast(parent.__v))
+                    .Reset(@as(*IBindingTable, @ptrCast(parent)), desc);
             }
         };
     }
@@ -588,20 +592,22 @@ pub const IID_ICommandRecorder = GUID.parse("{e6857a76-2e3e-4fdd-bff4-5d2ba10fb4
 pub const ICommandRecorder = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    object: IObject.Interface(@This()) = .{},
+    device_child: IDeviceChild.Interface(@This()) = .{},
+    command_recorder: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IDeviceChild.Methods(T);
-
             pub inline fn RecordDispatch(
-                self: *T,
+                self: *@This(),
                 cmdlist: *d3d12.ICommandList,
                 dispatchable: *IDispatchable,
                 bindings: *IBindingTable,
             ) void {
-                @as(*const ICommandRecorder.VTable, @ptrCast(self.__v))
-                    .RecordDispatch(@as(*ICommandRecorder, @ptrCast(self)), cmdlist, dispatchable, bindings);
+                const parent: *T = @alignCast(@fieldParentPtr("command_recorder", self));
+                @as(*const ICommandRecorder.VTable, @ptrCast(parent.__v))
+                    .RecordDispatch(@as(*ICommandRecorder, @ptrCast(parent)), cmdlist, dispatchable, bindings);
             }
         };
     }
@@ -621,15 +627,15 @@ pub const IID_IDebugDevice = GUID.parse("{7d6f3ac9-394a-4ac3-92a7-390cc57a8217}"
 pub const IDebugDevice = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    debug_device: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-
-            pub inline fn SetMuteDebugOutput(self: *T, mute: BOOL) void {
-                @as(*const IDebugDevice.VTable, @ptrCast(self.v))
-                    .SetMuteDebugOutput(@as(*IDebugDevice, @ptrCast(self)), mute);
+            pub inline fn SetMuteDebugOutput(self: *@This(), mute: BOOL) void {
+                const parent: *T = @alignCast(@fieldParentPtr("debug_device", self));
+                @as(*const IDebugDevice.VTable, @ptrCast(parent.__v))
+                    .SetMuteDebugOutput(@as(*IDebugDevice, @ptrCast(parent)), mute);
             }
         };
     }
@@ -644,22 +650,23 @@ pub const IID_IDevice = GUID.parse("{6dbd6437-96fd-423f-a98c-ae5e7c2a573f}");
 pub const IDevice = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    object: IObject.Interface(@This()) = .{},
+    device: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IObject.Methods(T);
-
             pub inline fn CheckFeatureSupport(
-                self: *T,
+                self: *@This(),
                 feature: FEATURE,
                 feature_query_data_size: UINT,
                 feature_query_data: ?*const anyopaque,
                 feature_support_data_size: UINT,
                 feature_support_data: *anyopaque,
             ) HRESULT {
-                return @as(*const IDevice.VTable, @ptrCast(self.__v)).CheckFeatureSupport(
-                    @as(*IDevice, @ptrCast(self)),
+                const parent: *T = @alignCast(@fieldParentPtr("device", self));
+                return @as(*const IDevice.VTable, @ptrCast(parent.__v)).CheckFeatureSupport(
+                    @as(*IDevice, @ptrCast(parent)),
                     feature,
                     feature_query_data_size,
                     feature_query_data,
@@ -668,62 +675,71 @@ pub const IDevice = extern struct {
                 );
             }
             pub inline fn CreateOperator(
-                self: *T,
+                self: *@This(),
                 desc: *const OPERATOR_DESC,
                 guid: *const GUID,
                 ppv: ?*?*anyopaque,
             ) HRESULT {
-                return @as(*const IDevice.VTable, @ptrCast(self.__v))
-                    .CreateOperator(@as(*IDevice, @ptrCast(self)), desc, guid, ppv);
+                const parent: *T = @alignCast(@fieldParentPtr("device", self));
+                return @as(*const IDevice.VTable, @ptrCast(parent.__v))
+                    .CreateOperator(@as(*IDevice, @ptrCast(parent)), desc, guid, ppv);
             }
             pub inline fn CompileOperator(
-                self: *T,
+                self: *@This(),
                 op: *IOperator,
                 flags: EXECUTION_FLAGS,
                 guid: *const GUID,
                 ppv: ?*?*anyopaque,
             ) HRESULT {
-                return @as(*const IDevice.VTable, @ptrCast(self.__v))
-                    .CompileOperator(@as(*IDevice, @ptrCast(self)), op, flags, guid, ppv);
+                const parent: *T = @alignCast(@fieldParentPtr("device", self));
+                return @as(*const IDevice.VTable, @ptrCast(parent.__v))
+                    .CompileOperator(@as(*IDevice, @ptrCast(parent)), op, flags, guid, ppv);
             }
             pub inline fn CreateOperatorInitializer(
-                self: *T,
+                self: *@This(),
                 num_ops: UINT,
                 ops: ?[*]const *ICompiledOperator,
                 guid: *const GUID,
                 ppv: *?*anyopaque,
             ) HRESULT {
-                return @as(*const IDevice.VTable, @ptrCast(self.__v))
-                    .CreateOperatorInitializer(@as(*IDevice, @ptrCast(self)), num_ops, ops, guid, ppv);
+                const parent: *T = @alignCast(@fieldParentPtr("device", self));
+                return @as(*const IDevice.VTable, @ptrCast(parent.__v))
+                    .CreateOperatorInitializer(@as(*IDevice, @ptrCast(parent)), num_ops, ops, guid, ppv);
             }
-            pub inline fn CreateCommandRecorder(self: *T, guid: *const GUID, ppv: *?*anyopaque) HRESULT {
-                return @as(*const IDevice.VTable, @ptrCast(self.__v))
-                    .CreateCommandRecorder(@as(*IDevice, @ptrCast(self)), guid, ppv);
+            pub inline fn CreateCommandRecorder(self: *@This(), guid: *const GUID, ppv: *?*anyopaque) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("device", self));
+                return @as(*const IDevice.VTable, @ptrCast(parent.__v))
+                    .CreateCommandRecorder(@as(*IDevice, @ptrCast(parent)), guid, ppv);
             }
             pub inline fn CreateBindingTable(
-                self: *T,
+                self: *@This(),
                 desc: ?*const BINDING_TABLE_DESC,
                 guid: *const GUID,
                 ppv: *?*anyopaque,
             ) HRESULT {
-                return @as(*const IDevice.VTable, @ptrCast(self.__v))
-                    .CreateBindingTable(@as(*IDevice, @ptrCast(self)), desc, guid, ppv);
+                const parent: *T = @alignCast(@fieldParentPtr("device", self));
+                return @as(*const IDevice.VTable, @ptrCast(parent.__v))
+                    .CreateBindingTable(@as(*IDevice, @ptrCast(parent)), desc, guid, ppv);
             }
-            pub inline fn Evict(self: *T, num: UINT, objs: [*]const *IPageable) HRESULT {
-                return @as(*const IDevice.VTable, @ptrCast(self.__v))
-                    .Evict(@as(*IDevice, @ptrCast(self)), num, objs);
+            pub inline fn Evict(self: *@This(), num: UINT, objs: [*]const *IPageable) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("device", self));
+                return @as(*const IDevice.VTable, @ptrCast(parent.__v))
+                    .Evict(@as(*IDevice, @ptrCast(parent)), num, objs);
             }
-            pub inline fn MakeResident(self: *T, num: UINT, objs: [*]const *IPageable) HRESULT {
-                return @as(*const IDevice.VTable, @ptrCast(self.__v))
-                    .MakeResident(@as(*IDevice, @ptrCast(self)), num, objs);
+            pub inline fn MakeResident(self: *@This(), num: UINT, objs: [*]const *IPageable) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("device", self));
+                return @as(*const IDevice.VTable, @ptrCast(parent.__v))
+                    .MakeResident(@as(*IDevice, @ptrCast(parent)), num, objs);
             }
-            pub inline fn GetDeviceRemovedReason(self: *T) HRESULT {
-                return @as(*const IDevice.VTable, @ptrCast(self.__v))
-                    .GetDeviceRemovedReason(@as(*IDevice, @ptrCast(self)));
+            pub inline fn GetDeviceRemovedReason(self: *@This()) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("device", self));
+                return @as(*const IDevice.VTable, @ptrCast(parent.__v))
+                    .GetDeviceRemovedReason(@as(*IDevice, @ptrCast(parent)));
             }
-            pub inline fn GetParentDevice(self: *T, guid: *const GUID, ppv: *?*anyopaque) HRESULT {
-                return @as(*const IDevice.VTable, @ptrCast(self.__v))
-                    .GetParentDevice(@as(*IDevice, @ptrCast(self)), guid, ppv);
+            pub inline fn GetParentDevice(self: *@This(), guid: *const GUID, ppv: *?*anyopaque) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("device", self));
+                return @as(*const IDevice.VTable, @ptrCast(parent.__v))
+                    .GetParentDevice(@as(*IDevice, @ptrCast(parent)), guid, ppv);
             }
         };
     }
@@ -842,21 +858,23 @@ pub const IID_IDevice1 = GUID.parse("{a0884f9a-d2be-4355-aa5d-5901281ad1d2}");
 pub const IDevice1 = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    object: IObject.Interface(@This()) = .{},
+    device: IDevice.Interface(@This()) = .{},
+    device1: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IDevice.Methods(T);
-
             pub inline fn CompileGraph(
-                self: *T,
+                self: *@This(),
                 desc: *const GRAPH_DESC,
                 flags: EXECUTION_FLAGS,
                 guid: *const GUID,
                 ppv: ?*?*anyopaque,
             ) HRESULT {
-                return @as(*const IDevice1.VTable, @ptrCast(self.__v))
-                    .CompileGraph(@as(*IDevice1, @ptrCast(self)), desc, flags, guid, ppv);
+                const parent: *T = @alignCast(@fieldParentPtr("device1", self));
+                return @as(*const IDevice1.VTable, @ptrCast(parent.__v))
+                    .CompileGraph(@as(*IDevice1, @ptrCast(parent)), desc, flags, guid, ppv);
             }
         };
     }
