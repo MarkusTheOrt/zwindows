@@ -1395,46 +1395,52 @@ pub const IID_IInfoQueue = GUID.parse("{6543dbb6-1b48-42f5-ab82-e97ec74326f6}");
 pub const IInfoQueue = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    info_queue: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-
             pub inline fn GetMessage(
-                self: *T,
+                self: *@This(),
                 MessageIndex: UINT64,
                 pMessage: ?*MESSAGE,
                 pMessageByteLength: *SIZE_T,
             ) HRESULT {
-                return @as(*const IInfoQueue.VTable, @ptrCast(self.__v)).GetMessage(
-                    @as(*IInfoQueue, @ptrCast(self)),
+                const parent: *T = @alignCast(@fieldParentPtr("info_queue", self));
+                return @as(*const IInfoQueue.VTable, @ptrCast(parent.__v)).GetMessage(
+                    @as(*IInfoQueue, @ptrCast(parent)),
                     MessageIndex,
                     pMessage,
                     pMessageByteLength,
                 );
             }
-            pub inline fn GetNumStoredMessages(self: *T) UINT64 {
-                return @as(*const IInfoQueue.VTable, @ptrCast(self.__v))
-                    .GetNumStoredMessages(@as(*IInfoQueue, @ptrCast(self)));
+            pub inline fn GetNumStoredMessages(self: *@This()) UINT64 {
+                const parent: *T = @alignCast(@fieldParentPtr("info_queue", self));
+                return @as(*const IInfoQueue.VTable, @ptrCast(parent.__v))
+                    .GetNumStoredMessages(@as(*IInfoQueue, @ptrCast(parent)));
             }
-            pub inline fn AddStorageFilterEntries(self: *T, filter: *INFO_QUEUE_FILTER) HRESULT {
-                return @as(*const IInfoQueue.VTable, @ptrCast(self.__v))
-                    .AddStorageFilterEntries(@as(*IInfoQueue, @ptrCast(self)), filter);
+            pub inline fn AddStorageFilterEntries(self: *@This(), filter: *INFO_QUEUE_FILTER) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("info_queue", self));
+                return @as(*const IInfoQueue.VTable, @ptrCast(parent.__v))
+                    .AddStorageFilterEntries(@as(*IInfoQueue, @ptrCast(parent)), filter);
             }
-            pub inline fn PushEmptyStorageFilter(self: *T) HRESULT {
-                return @as(*const IInfoQueue.VTable, @ptrCast(self.__v))
-                    .PushEmptyStorageFilter(@as(*IInfoQueue, @ptrCast(self)));
+            pub inline fn PushEmptyStorageFilter(self: *@This()) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("info_queue", self));
+                return @as(*const IInfoQueue.VTable, @ptrCast(parent.__v))
+                    .PushEmptyStorageFilter(@as(*IInfoQueue, @ptrCast(parent)));
             }
-            pub inline fn PushStorageFilter(self: *T, filter: *INFO_QUEUE_FILTER) HRESULT {
-                return @as(*const IInfoQueue.VTable, @ptrCast(self.__v))
-                    .PushStorageFilter(@as(*IInfoQueue, @ptrCast(self)), filter);
+            pub inline fn PushStorageFilter(self: *@This(), filter: *INFO_QUEUE_FILTER) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("info_queue", self));
+                return @as(*const IInfoQueue.VTable, @ptrCast(parent.__v))
+                    .PushStorageFilter(@as(*IInfoQueue, @ptrCast(parent)), filter);
             }
-            pub inline fn PopStorageFilter(self: *T) void {
-                @as(*const IInfoQueue.VTable, @ptrCast(self.__v)).PopStorageFilter();
+            pub inline fn PopStorageFilter(self: *@This()) void {
+                const parent: *T = @alignCast(@fieldParentPtr("info_queue", self));
+                @as(*const IInfoQueue.VTable, @ptrCast(parent.__v)).PopStorageFilter();
             }
-            pub inline fn SetMuteDebugOutput(self: *T, mute: BOOL) void {
-                @as(*const IInfoQueue.VTable, @ptrCast(self.__v)).SetMuteDebugOutput(@as(*IInfoQueue, @ptrCast(self)), mute);
+            pub inline fn SetMuteDebugOutput(self: *@This(), mute: BOOL) void {
+                const parent: *T = @alignCast(@fieldParentPtr("info_queue", self));
+                @as(*const IInfoQueue.VTable, @ptrCast(parent.__v)).SetMuteDebugOutput(@as(*IInfoQueue, @ptrCast(parent)), mute);
             }
         };
     }
