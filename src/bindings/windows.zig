@@ -461,7 +461,25 @@ pub fn IUnknownInterface(T: type) type {
 pub const IUnknown = extern struct {
     __v: *const VTable,
 
-    unknown: IUnknownInterface(@This()) = .{},
+    unknown: Interface(@This()) = .{},
+
+    pub fn Interface(T: type) type {
+        return struct {
+            pub inline fn QueryInterface(self: *@This(), guid: *const GUID, outobj: ?*?*anyopaque) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("unknown", self));
+                return @as(*const IUnknown.VTable, @ptrCast(parent.__v))
+                    .QueryInterface(@as(*IUnknown, @ptrCast(parent)), guid, outobj);
+            }
+            pub inline fn AddRef(self: *@This()) ULONG {
+                const parent: *T = @alignCast(@fieldParentPtr("unknown", self));
+                return @as(*const IUnknown.VTable, @ptrCast(parent.__v)).AddRef(@as(*IUnknown, @ptrCast(parent)));
+            }
+            pub inline fn Release(self: *@This()) ULONG {
+                const parent: *T = @alignCast(@fieldParentPtr("unknown", self));
+                return @as(*const IUnknown.VTable, @ptrCast(parent.__v)).Release(@as(*IUnknown, @ptrCast(parent)));
+            }
+        };
+    }
 
     pub const VTable = extern struct {
         QueryInterface: *const fn (*IUnknown, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,

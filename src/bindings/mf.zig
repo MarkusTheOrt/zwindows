@@ -1,5 +1,6 @@
 const windows = @import("windows.zig");
 const IUnknown = windows.IUnknown;
+const IUnknownInterface = windows.IUnknownInterface;
 const UINT = windows.UINT;
 const UINT32 = windows.UINT32;
 const HRESULT = windows.HRESULT;
@@ -53,40 +54,44 @@ pub extern "mfreadwrite" fn MFCreateSourceReaderFromURL(
     reader: **ISourceReader,
 ) callconv(WINAPI) HRESULT;
 
+pub fn IAttributesInterface(T: type) type {
+    return extern struct {
+        pub inline fn GetUINT32(self: *@This(), guid: *const GUID, value: *UINT32) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("attributes", self));
+            return @as(*const IAttributes.VTable, @ptrCast(parent.__v)).GetUINT32(
+                @as(*IAttributes, @ptrCast(parent)),
+                guid,
+                value,
+            );
+        }
+        pub inline fn GetGUID(self: *@This(), key: *const GUID, value: *GUID) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("attributes", self));
+            return @as(*const IAttributes.VTable, @ptrCast(parent.__v))
+                .GetGUID(@as(*IAttributes, @ptrCast(parent)), key, value);
+        }
+        pub inline fn SetUINT32(self: *@This(), guid: *const GUID, value: UINT32) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("attributes", self));
+            return @as(*const IAttributes.VTable, @ptrCast(parent.__v))
+                .SetUINT32(@as(*IAttributes, @ptrCast(parent)), guid, value);
+        }
+        pub inline fn SetGUID(self: *@This(), key: *const GUID, value: *const GUID) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("attributes", self));
+            return @as(*const IAttributes.VTable, @ptrCast(parent.__v))
+                .SetGUID(@as(*IAttributes, @ptrCast(parent)), key, value);
+        }
+        pub inline fn SetUnknown(self: *@This(), guid: *const GUID, unknown: ?*IUnknown) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("attributes", self));
+            return @as(*const IAttributes.VTable, @ptrCast(parent.__v))
+                .SetUnknown(@as(*IAttributes, @ptrCast(parent)), guid, unknown);
+        }
+    };
+}
+
 pub const IAttributes = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-
-            pub inline fn GetUINT32(self: *T, guid: *const GUID, value: *UINT32) HRESULT {
-                return @as(*const IAttributes.VTable, @ptrCast(self.__v)).GetUINT32(
-                    @as(*IAttributes, @ptrCast(self)),
-                    guid,
-                    value,
-                );
-            }
-            pub inline fn GetGUID(self: *T, key: *const GUID, value: *GUID) HRESULT {
-                return @as(*const IAttributes.VTable, @ptrCast(self.__v))
-                    .GetGUID(@as(*IAttributes, @ptrCast(self)), key, value);
-            }
-            pub inline fn SetUINT32(self: *T, guid: *const GUID, value: UINT32) HRESULT {
-                return @as(*const IAttributes.VTable, @ptrCast(self.__v))
-                    .SetUINT32(@as(*IAttributes, @ptrCast(self)), guid, value);
-            }
-            pub inline fn SetGUID(self: *T, key: *const GUID, value: *const GUID) HRESULT {
-                return @as(*const IAttributes.VTable, @ptrCast(self.__v))
-                    .SetGUID(@as(*IAttributes, @ptrCast(self)), key, value);
-            }
-            pub inline fn SetUnknown(self: *T, guid: *const GUID, unknown: ?*IUnknown) HRESULT {
-                return @as(*const IAttributes.VTable, @ptrCast(self.__v))
-                    .SetUnknown(@as(*IAttributes, @ptrCast(self)), guid, unknown);
-            }
-        };
-    }
+    unknown: IUnknownInterface(@This()) = .{},
+    attributes: IAttributesInterface(@This()) = .{},
 
     pub const VTable = extern struct {
         base: IUnknown.VTable,
@@ -123,30 +128,38 @@ pub const IAttributes = extern struct {
     };
 };
 
+pub fn IMediaEventInterface(T: type) type {
+    return extern struct {};
+}
+
 pub const IMediaEvent = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    attributes: IAttributes.Interface(@This()) = .{},
+    media_event: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IAttributes.Methods(T);
-
-            pub inline fn GetType(self: *T, met: *MediaEventType) HRESULT {
-                return @as(*const IMediaEvent.VTable, @ptrCast(self.__v))
-                    .GetType(@as(*IMediaEvent, @ptrCast(self)), met);
+            pub inline fn GetType(self: *@This(), met: *MediaEventType) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("media_event", self));
+                return @as(*const IMediaEvent.VTable, @ptrCast(parent.__v))
+                    .GetType(@as(*IMediaEvent, @ptrCast(parent)), met);
             }
-            pub inline fn GetExtendedType(self: *T, ex_met: *GUID) HRESULT {
-                return @as(*const IMediaEvent.VTable, @ptrCast(self.__v))
-                    .GetExtendedType(@as(*IMediaEvent, @ptrCast(self)), ex_met);
+            pub inline fn GetExtendedType(self: *@This(), ex_met: *GUID) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("media_event", self));
+                return @as(*const IMediaEvent.VTable, @ptrCast(parent.__v))
+                    .GetExtendedType(@as(*IMediaEvent, @ptrCast(parent)), ex_met);
             }
-            pub inline fn GetStatus(self: *T, status: *HRESULT) HRESULT {
-                return @as(*const IMediaEvent.VTable, @ptrCast(self.__v))
-                    .GetStatus(@as(*IMediaEvent, @ptrCast(self)), status);
+            pub inline fn GetStatus(self: *@This(), status: *HRESULT) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("media_event", self));
+                return @as(*const IMediaEvent.VTable, @ptrCast(parent.__v))
+                    .GetStatus(@as(*IMediaEvent, @ptrCast(parent)), status);
             }
-            pub inline fn GetValue(self: *T, value: *PROPVARIANT) HRESULT {
-                return @as(*const IMediaEvent.VTable, @ptrCast(self.__v))
-                    .GetValue(@as(*IMediaEvent, @ptrCast(self)), value);
+            pub inline fn GetValue(self: *@This(), value: *PROPVARIANT) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("media_event", self));
+                return @as(*const IMediaEvent.VTable, @ptrCast(parent.__v))
+                    .GetValue(@as(*IMediaEvent, @ptrCast(parent)), value);
             }
         };
     }

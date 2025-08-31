@@ -11,7 +11,6 @@ const WCHAR = windows.WCHAR;
 const GUID = windows.GUID;
 const ULONG = windows.ULONG;
 const IUnknown = windows.IUnknown;
-const IUnknownInterface = windows.IUnknownInterface;
 const wasapi = @import("wasapi.zig");
 const WAVEFORMATEX = wasapi.WAVEFORMATEX;
 
@@ -62,107 +61,107 @@ pub const PROCESS_BUFFER_PARAMETERS = extern struct {
     ValidFrameCount: UINT32 align(1),
 };
 
-pub fn IXAPOInterface(T: type) type {
-    return struct {
-        pub inline fn GetRegistrationProperties(self: *@This(), props: **REGISTRATION_PROPERTIES) HRESULT {
-            const parent: *T = @alignCast(@fieldParentPtr("ixapo", self));
-            return @as(*const IXAPO.VTable, @ptrCast(parent.__v))
-                .GetRegistrationProperties(@as(*IXAPO, @ptrCast(parent)), props);
-        }
-        pub inline fn IsInputFormatSupported(
-            self: *@This(),
-            output_format: *const WAVEFORMATEX,
-            requested_input_format: *const WAVEFORMATEX,
-            supported_input_format: ?**WAVEFORMATEX,
-        ) HRESULT {
-            const parent: *T = @alignCast(@fieldParentPtr("ixapo", self));
-            return @as(*const IXAPO.VTable, @ptrCast(parent.__v)).IsInputFormatSupported(
-                @as(*IXAPO, @ptrCast(parent)),
-                output_format,
-                requested_input_format,
-                supported_input_format,
-            );
-        }
-        pub inline fn IsOutputFormatSupported(
-            self: *@This(),
-            input_format: *const WAVEFORMATEX,
-            requested_output_format: *const WAVEFORMATEX,
-            supported_output_format: ?**WAVEFORMATEX,
-        ) HRESULT {
-            const parent: *T = @alignCast(@fieldParentPtr("ixapo", self));
-            return @as(*const IXAPO.VTable, @ptrCast(parent.__v)).IsOutputFormatSupported(
-                @as(*IXAPO, @ptrCast(parent)),
-                input_format,
-                requested_output_format,
-                supported_output_format,
-            );
-        }
-        pub inline fn Initialize(self: *@This(), data: ?*const anyopaque, data_size: UINT32) HRESULT {
-            const parent: *T = @alignCast(@fieldParentPtr("ixapo", self));
-            return @as(*const IXAPO.VTable, @ptrCast(parent.__v))
-                .Initialize(@as(*IXAPO, @ptrCast(parent)), data, data_size);
-        }
-        pub inline fn Reset(self: *T) void {
-            const parent: *T = @alignCast(@fieldParentPtr("ixapo", self));
-            @as(*const IXAPO.VTable, @ptrCast(parent.__v)).Reset(@as(*IXAPO, @ptrCast(parent)));
-        }
-        pub inline fn LockForProcess(
-            self: *@This(),
-            num_input_params: UINT32,
-            input_params: ?[*]const LOCKFORPROCESS_BUFFER_PARAMETERS,
-            num_output_params: UINT32,
-            output_params: ?[*]const LOCKFORPROCESS_BUFFER_PARAMETERS,
-        ) HRESULT {
-            const parent: *T = @alignCast(@fieldParentPtr("ixapo", self));
-            return @as(*const IXAPO.VTable, @ptrCast(parent.__v)).LockForProcess(
-                @as(*IXAPO, @ptrCast(parent)),
-                num_input_params,
-                input_params,
-                num_output_params,
-                output_params,
-            );
-        }
-        pub inline fn UnlockForProcess(self: *@This()) void {
-            const parent: *T = @alignCast(@fieldParentPtr("ixapo", self));
-            @as(*const IXAPO.VTable, @ptrCast(parent.__v)).UnlockForProcess(@as(*IXAPO, @ptrCast(parent)));
-        }
-        pub inline fn Process(
-            self: *@This(),
-            num_input_params: UINT32,
-            input_params: ?[*]const PROCESS_BUFFER_PARAMETERS,
-            num_output_params: UINT32,
-            output_params: ?[*]PROCESS_BUFFER_PARAMETERS,
-            is_enabled: BOOL,
-        ) void {
-            const parent: *T = @alignCast(@fieldParentPtr("ixapo", self));
-            return @as(*const IXAPO.VTable, @ptrCast(parent.__v)).Process(
-                @as(*IXAPO, @ptrCast(parent)),
-                num_input_params,
-                input_params,
-                num_output_params,
-                output_params,
-                is_enabled,
-            );
-        }
-        pub inline fn CalcInputFrames(self: *@This(), num_output_frames: UINT32) UINT32 {
-            const parent: *T = @alignCast(@fieldParentPtr("ixapo", self));
-            return @as(*const IXAPO.VTable, @ptrCast(parent.__v))
-                .CalcInputFrames(@as(*IXAPO, @ptrCast(parent)), num_output_frames);
-        }
-        pub inline fn CalcOutputFrames(self: *@This(), num_input_frames: UINT32) UINT32 {
-            const parent: *T = @alignCast(@fieldParentPtr("ixapo", self));
-            return @as(*const IXAPO.VTable, @ptrCast(parent.__v))
-                .CalcOutputFrames(@as(*IXAPO, @ptrCast(parent)), num_input_frames);
-        }
-    };
-}
-
 pub const IID_IXAPO = GUID.parse("{A410B984-9839-4819-A0BE-2856AE6B3ADB}");
 pub const IXAPO = extern struct {
     __v: *const VTable,
 
-    unknown: IUnknownInterface(@This()) = .{},
-    ixapo: IXAPOInterface(@This()) = .{},
+    unknown: IUnknown.Interface(@This()) = .{},
+    ixapo: Interface(@This()) = .{},
+
+    pub fn Interface(T: type) type {
+        return struct {
+            pub inline fn GetRegistrationProperties(self: *@This(), props: **REGISTRATION_PROPERTIES) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("ixapo", self));
+                return @as(*const IXAPO.VTable, @ptrCast(parent.__v))
+                    .GetRegistrationProperties(@as(*IXAPO, @ptrCast(parent)), props);
+            }
+            pub inline fn IsInputFormatSupported(
+                self: *@This(),
+                output_format: *const WAVEFORMATEX,
+                requested_input_format: *const WAVEFORMATEX,
+                supported_input_format: ?**WAVEFORMATEX,
+            ) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("ixapo", self));
+                return @as(*const IXAPO.VTable, @ptrCast(parent.__v)).IsInputFormatSupported(
+                    @as(*IXAPO, @ptrCast(parent)),
+                    output_format,
+                    requested_input_format,
+                    supported_input_format,
+                );
+            }
+            pub inline fn IsOutputFormatSupported(
+                self: *@This(),
+                input_format: *const WAVEFORMATEX,
+                requested_output_format: *const WAVEFORMATEX,
+                supported_output_format: ?**WAVEFORMATEX,
+            ) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("ixapo", self));
+                return @as(*const IXAPO.VTable, @ptrCast(parent.__v)).IsOutputFormatSupported(
+                    @as(*IXAPO, @ptrCast(parent)),
+                    input_format,
+                    requested_output_format,
+                    supported_output_format,
+                );
+            }
+            pub inline fn Initialize(self: *@This(), data: ?*const anyopaque, data_size: UINT32) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("ixapo", self));
+                return @as(*const IXAPO.VTable, @ptrCast(parent.__v))
+                    .Initialize(@as(*IXAPO, @ptrCast(parent)), data, data_size);
+            }
+            pub inline fn Reset(self: *T) void {
+                const parent: *T = @alignCast(@fieldParentPtr("ixapo", self));
+                @as(*const IXAPO.VTable, @ptrCast(parent.__v)).Reset(@as(*IXAPO, @ptrCast(parent)));
+            }
+            pub inline fn LockForProcess(
+                self: *@This(),
+                num_input_params: UINT32,
+                input_params: ?[*]const LOCKFORPROCESS_BUFFER_PARAMETERS,
+                num_output_params: UINT32,
+                output_params: ?[*]const LOCKFORPROCESS_BUFFER_PARAMETERS,
+            ) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("ixapo", self));
+                return @as(*const IXAPO.VTable, @ptrCast(parent.__v)).LockForProcess(
+                    @as(*IXAPO, @ptrCast(parent)),
+                    num_input_params,
+                    input_params,
+                    num_output_params,
+                    output_params,
+                );
+            }
+            pub inline fn UnlockForProcess(self: *@This()) void {
+                const parent: *T = @alignCast(@fieldParentPtr("ixapo", self));
+                @as(*const IXAPO.VTable, @ptrCast(parent.__v)).UnlockForProcess(@as(*IXAPO, @ptrCast(parent)));
+            }
+            pub inline fn Process(
+                self: *@This(),
+                num_input_params: UINT32,
+                input_params: ?[*]const PROCESS_BUFFER_PARAMETERS,
+                num_output_params: UINT32,
+                output_params: ?[*]PROCESS_BUFFER_PARAMETERS,
+                is_enabled: BOOL,
+            ) void {
+                const parent: *T = @alignCast(@fieldParentPtr("ixapo", self));
+                return @as(*const IXAPO.VTable, @ptrCast(parent.__v)).Process(
+                    @as(*IXAPO, @ptrCast(parent)),
+                    num_input_params,
+                    input_params,
+                    num_output_params,
+                    output_params,
+                    is_enabled,
+                );
+            }
+            pub inline fn CalcInputFrames(self: *@This(), num_output_frames: UINT32) UINT32 {
+                const parent: *T = @alignCast(@fieldParentPtr("ixapo", self));
+                return @as(*const IXAPO.VTable, @ptrCast(parent.__v))
+                    .CalcInputFrames(@as(*IXAPO, @ptrCast(parent)), num_output_frames);
+            }
+            pub inline fn CalcOutputFrames(self: *@This(), num_input_frames: UINT32) UINT32 {
+                const parent: *T = @alignCast(@fieldParentPtr("ixapo", self));
+                return @as(*const IXAPO.VTable, @ptrCast(parent.__v))
+                    .CalcOutputFrames(@as(*IXAPO, @ptrCast(parent)), num_input_frames);
+            }
+        };
+    }
 
     pub const VTable = extern struct {
         const T = IXAPO;
@@ -203,26 +202,26 @@ pub const IXAPO = extern struct {
     };
 };
 
-pub fn IXAPOParametersInterface(T: type) type {
-    return struct {
-        pub inline fn SetParameters(self: *@This(), params: *const anyopaque, size: UINT32) void {
-            const parent: *T = @alignCast(@fieldParentPtr("ixapo_parameters", self));
-            @as(*const IXAPOParameters.VTable, @ptrCast(parent.__v))
-                .SetParameters(@as(*IXAPOParameters, @ptrCast(parent)), params, size);
-        }
-        pub inline fn GetParameters(self: *@This(), params: *anyopaque, size: UINT32) void {
-            const parent: *T = @alignCast(@fieldParentPtr("ixapo_parameters", self));
-            @as(*const IXAPOParameters.VTable, @ptrCast(parent.__v))
-                .GetParameters(@as(*IXAPOParameters, @ptrCast(parent)), params, size);
-        }
-    };
-}
-
 pub const IXAPOParameters = extern struct {
     __v: *const VTable,
 
-    unknown: IUnknownInterface(@This()) = .{},
-    ixapo_parameters: IXAPOParametersInterface(@This()) = .{},
+    unknown: IUnknown.Interface(@This()) = .{},
+    ixapo_parameters: Interface(@This()) = .{},
+
+    pub fn Interface(T: type) type {
+        return struct {
+            pub inline fn SetParameters(self: *@This(), params: *const anyopaque, size: UINT32) void {
+                const parent: *T = @alignCast(@fieldParentPtr("ixapo_parameters", self));
+                @as(*const IXAPOParameters.VTable, @ptrCast(parent.__v))
+                    .SetParameters(@as(*IXAPOParameters, @ptrCast(parent)), params, size);
+            }
+            pub inline fn GetParameters(self: *@This(), params: *anyopaque, size: UINT32) void {
+                const parent: *T = @alignCast(@fieldParentPtr("ixapo_parameters", self));
+                @as(*const IXAPOParameters.VTable, @ptrCast(parent.__v))
+                    .GetParameters(@as(*IXAPOParameters, @ptrCast(parent)), params, size);
+            }
+        };
+    }
 
     const VTable = extern struct {
         base: IUnknown.VTable,
