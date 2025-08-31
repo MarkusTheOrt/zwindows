@@ -2,8 +2,6 @@
 
 const std = @import("std");
 
-pub usingnamespace std.os.windows;
-
 const WINAPI = std.os.windows.WINAPI;
 const S_OK = std.os.windows.S_OK;
 const S_FALSE = std.os.windows.S_FALSE;
@@ -441,25 +439,29 @@ pub inline fn HIWORD(dword: DWORD) WORD {
 }
 
 pub const IID_IUnknown = GUID.parse("{00000000-0000-0000-C000-000000000046}");
+
+pub fn IUnknownInterface(T: type) type {
+    return struct {
+        pub inline fn QueryInterface(self: *@This(), guid: *const GUID, outobj: ?*?*anyopaque) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("unknown", self));
+            return @as(*const IUnknown.VTable, @ptrCast(parent.__v))
+                .QueryInterface(@as(*IUnknown, @ptrCast(parent)), guid, outobj);
+        }
+        pub inline fn AddRef(self: *@This()) ULONG {
+            const parent: *T = @alignCast(@fieldParentPtr("unknown", self));
+            return @as(*const IUnknown.VTable, @ptrCast(parent.__v)).AddRef(@as(*IUnknown, @ptrCast(parent)));
+        }
+        pub inline fn Release(self: *@This()) ULONG {
+            const parent: *T = @alignCast(@fieldParentPtr("unknown", self));
+            return @as(*const IUnknown.VTable, @ptrCast(parent.__v)).Release(@as(*IUnknown, @ptrCast(parent)));
+        }
+    };
+}
+
 pub const IUnknown = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub inline fn QueryInterface(self: *T, guid: *const GUID, outobj: ?*?*anyopaque) HRESULT {
-                return @as(*const IUnknown.VTable, @ptrCast(self.__v))
-                    .QueryInterface(@as(*IUnknown, @ptrCast(self)), guid, outobj);
-            }
-            pub inline fn AddRef(self: *T) ULONG {
-                return @as(*const IUnknown.VTable, @ptrCast(self.__v)).AddRef(@as(*IUnknown, @ptrCast(self)));
-            }
-            pub inline fn Release(self: *T) ULONG {
-                return @as(*const IUnknown.VTable, @ptrCast(self.__v)).Release(@as(*IUnknown, @ptrCast(self)));
-            }
-        };
-    }
+    unknown: IUnknownInterface(@This()) = .{},
 
     pub const VTable = extern struct {
         QueryInterface: *const fn (*IUnknown, *const GUID, ?*?*anyopaque) callconv(WINAPI) HRESULT,
