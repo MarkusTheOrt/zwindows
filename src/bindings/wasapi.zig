@@ -3,6 +3,7 @@ const BYTE = windows.BYTE;
 const UINT = windows.UINT;
 const UINT32 = windows.UINT32;
 const IUnknown = windows.IUnknown;
+const IUnknownInterface = windows.IUnknownInterface;
 const WINAPI = windows.WINAPI;
 const GUID = windows.GUID;
 const HRESULT = windows.HRESULT;
@@ -27,27 +28,27 @@ pub const ERole = enum(UINT) {
     eCommunications = 2,
 };
 
+pub fn IMMDeviceInterface(T: type) type {
+    return extern struct {
+        pub inline fn Activate(
+            self: *@This(),
+            guid: *const GUID,
+            clsctx: DWORD,
+            params: ?*PROPVARIANT,
+            iface: *?*anyopaque,
+        ) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("mm_device", self));
+            return @as(*const IMMDevice.VTable, @ptrCast(parent.__v))
+                .Activate(@as(*IMMDevice, @ptrCast(parent)), guid, clsctx, params, iface);
+        }
+    };
+}
+
 pub const IMMDevice = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-
-            pub inline fn Activate(
-                self: *T,
-                guid: *const GUID,
-                clsctx: DWORD,
-                params: ?*PROPVARIANT,
-                iface: *?*anyopaque,
-            ) HRESULT {
-                return @as(*const IMMDevice.VTable, @ptrCast(self.__v))
-                    .Activate(@as(*IMMDevice, @ptrCast(self)), guid, clsctx, params, iface);
-            }
-        };
-    }
+    unknown: IUnknownInterface(@This()) = .{},
+    mm_devices: IMMDeviceInterface(@This()) = .{},
 
     pub const VTable = extern struct {
         base: IUnknown.VTable,
@@ -64,26 +65,26 @@ pub const IMMDevice = extern struct {
     };
 };
 
+pub fn IMMDeviceEnumeratorInterface(T: type) type {
+    return extern struct {
+        pub inline fn GetDefaultAudioEndpoint(
+            self: *@This(),
+            flow: EDataFlow,
+            role: ERole,
+            endpoint: *?*IMMDevice,
+        ) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("mm_device_enumerator", self));
+            return @as(*const IMMDeviceEnumerator.VTable, @ptrCast(parent.__v))
+                .GetDefaultAudioEndpoint(@as(*IMMDeviceEnumerator, @ptrCast(parent)), flow, role, endpoint);
+        }
+    };
+}
+
 pub const IMMDeviceEnumerator = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-
-            pub inline fn GetDefaultAudioEndpoint(
-                self: *T,
-                flow: EDataFlow,
-                role: ERole,
-                endpoint: *?*IMMDevice,
-            ) HRESULT {
-                return @as(*const IMMDeviceEnumerator.VTable, @ptrCast(self.__v))
-                    .GetDefaultAudioEndpoint(@as(*IMMDeviceEnumerator, @ptrCast(self)), flow, role, endpoint);
-            }
-        };
-    }
+    unknown: IUnknownInterface(@This()) = .{},
+    mm_device_enumerator: IMMDeviceEnumeratorInterface(@This()) = .{},
 
     pub const VTable = extern struct {
         base: IUnknown.VTable,
@@ -146,82 +147,93 @@ pub const AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY: UINT = 0x1;
 pub const AUDCLNT_BUFFERFLAGS_SILENT: UINT = 0x2;
 pub const AUDCLNT_BUFFERFLAGS_TIMESTAMP_ERROR: UINT = 0x4;
 
+pub fn IAudioClientInterface(T: type) type {
+    return extern struct {
+        pub inline fn Initialize(
+            self: *@This(),
+            mode: AUDCLNT_SHAREMODE,
+            stream_flags: DWORD,
+            buffer_duration: REFERENCE_TIME,
+            periodicity: REFERENCE_TIME,
+            format: *const WAVEFORMATEX,
+            audio_session: ?*?*GUID,
+        ) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("audio_client", self));
+            return @as(*const IAudioClient.VTable, @ptrCast(parent.__v)).Initialize(
+                @as(*IAudioClient, @ptrCast(parent)),
+                mode,
+                stream_flags,
+                buffer_duration,
+                periodicity,
+                format,
+                audio_session,
+            );
+        }
+        pub inline fn GetBufferSize(self: *@This(), size: *UINT32) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("audio_client", self));
+            return @as(*const IAudioClient.VTable, @ptrCast(parent.__v))
+                .GetBufferSize(@as(*IAudioClient, @ptrCast(parent)), size);
+        }
+        pub inline fn GetStreamLatency(self: *@This(), latency: *REFERENCE_TIME) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("audio_client", self));
+            return @as(*const IAudioClient.VTable, @ptrCast(parent.__v))
+                .GetStreamLatency(@as(*IAudioClient, @ptrCast(parent)), latency);
+        }
+        pub inline fn GetCurrentPadding(self: *@This(), padding: *UINT32) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("audio_client", self));
+            return @as(*const IAudioClient.VTable, @ptrCast(parent.__v))
+                .GetCurrentPadding(@as(*IAudioClient, @ptrCast(parent)), padding);
+        }
+        pub inline fn IsFormatSupported(
+            self: *@This(),
+            mode: AUDCLNT_SHAREMODE,
+            format: *const WAVEFORMATEX,
+            closest_format: ?*?*WAVEFORMATEX,
+        ) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("audio_client", self));
+            return @as(*const IAudioClient.VTable, @ptrCast(parent.__v))
+                .IsFormatSupported(@as(*IAudioClient, @ptrCast(parent)), mode, format, closest_format);
+        }
+        pub inline fn GetMixFormat(self: *@This(), format: **WAVEFORMATEX) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("audio_client", self));
+            return @as(*const IAudioClient.VTable, @ptrCast(parent.__v))
+                .GetMixFormat(@as(*IAudioClient, @ptrCast(parent)), format);
+        }
+        pub inline fn GetDevicePeriod(self: *@This(), default: ?*REFERENCE_TIME, minimum: ?*REFERENCE_TIME) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("audio_client", self));
+            return @as(*const IAudioClient.VTable, @ptrCast(parent.__v))
+                .GetDevicePeriod(@as(*IAudioClient, @ptrCast(parent)), default, minimum);
+        }
+        pub inline fn Start(self: *@This()) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("audio_client", self));
+            return @as(*const IAudioClient.VTable, @ptrCast(parent.__v)).Start(@as(*IAudioClient, @ptrCast(parent)));
+        }
+        pub inline fn Stop(self: *@This()) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("audio_client", self));
+            return @as(*const IAudioClient.VTable, @ptrCast(parent.__v)).Stop(@as(*IAudioClient, @ptrCast(parent)));
+        }
+        pub inline fn Reset(self: *@This()) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("audio_client", self));
+            return @as(*const IAudioClient.VTable, @ptrCast(parent.__v)).Reset(@as(*IAudioClient, @ptrCast(parent)));
+        }
+        pub inline fn SetEventHandle(self: *@This(), handle: HANDLE) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("audio_client", self));
+            return @as(*const IAudioClient.VTable, @ptrCast(parent.__v))
+                .SetEventHandle(@as(*IAudioClient, @ptrCast(parent)), handle);
+        }
+        pub inline fn GetService(self: *@This(), guid: *const GUID, iface: *?*anyopaque) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("audio_client", self));
+            return @as(*const IAudioClient.VTable, @ptrCast(parent.__v))
+                .GetService(@as(*IAudioClient, @ptrCast(parent)), guid, iface);
+        }
+    };
+}
+
 pub const IAudioClient = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-
-            pub inline fn Initialize(
-                self: *T,
-                mode: AUDCLNT_SHAREMODE,
-                stream_flags: DWORD,
-                buffer_duration: REFERENCE_TIME,
-                periodicity: REFERENCE_TIME,
-                format: *const WAVEFORMATEX,
-                audio_session: ?*?*GUID,
-            ) HRESULT {
-                return @as(*const IAudioClient.VTable, @ptrCast(self.__v)).Initialize(
-                    @as(*IAudioClient, @ptrCast(self)),
-                    mode,
-                    stream_flags,
-                    buffer_duration,
-                    periodicity,
-                    format,
-                    audio_session,
-                );
-            }
-            pub inline fn GetBufferSize(self: *T, size: *UINT32) HRESULT {
-                return @as(*const IAudioClient.VTable, @ptrCast(self.__v))
-                    .GetBufferSize(@as(*IAudioClient, @ptrCast(self)), size);
-            }
-            pub inline fn GetStreamLatency(self: *T, latency: *REFERENCE_TIME) HRESULT {
-                return @as(*const IAudioClient.VTable, @ptrCast(self.__v))
-                    .GetStreamLatency(@as(*IAudioClient, @ptrCast(self)), latency);
-            }
-            pub inline fn GetCurrentPadding(self: *T, padding: *UINT32) HRESULT {
-                return @as(*const IAudioClient.VTable, @ptrCast(self.__v))
-                    .GetCurrentPadding(@as(*IAudioClient, @ptrCast(self)), padding);
-            }
-            pub inline fn IsFormatSupported(
-                self: *T,
-                mode: AUDCLNT_SHAREMODE,
-                format: *const WAVEFORMATEX,
-                closest_format: ?*?*WAVEFORMATEX,
-            ) HRESULT {
-                return @as(*const IAudioClient.VTable, @ptrCast(self.__v))
-                    .IsFormatSupported(@as(*IAudioClient, @ptrCast(self)), mode, format, closest_format);
-            }
-            pub inline fn GetMixFormat(self: *T, format: **WAVEFORMATEX) HRESULT {
-                return @as(*const IAudioClient.VTable, @ptrCast(self.__v))
-                    .GetMixFormat(@as(*IAudioClient, @ptrCast(self)), format);
-            }
-            pub inline fn GetDevicePeriod(self: *T, default: ?*REFERENCE_TIME, minimum: ?*REFERENCE_TIME) HRESULT {
-                return @as(*const IAudioClient.VTable, @ptrCast(self.__v))
-                    .GetDevicePeriod(@as(*IAudioClient, @ptrCast(self)), default, minimum);
-            }
-            pub inline fn Start(self: *T) HRESULT {
-                return @as(*const IAudioClient.VTable, @ptrCast(self.__v)).Start(@as(*IAudioClient, @ptrCast(self)));
-            }
-            pub inline fn Stop(self: *T) HRESULT {
-                return @as(*const IAudioClient.VTable, @ptrCast(self.__v)).Stop(@as(*IAudioClient, @ptrCast(self)));
-            }
-            pub inline fn Reset(self: *T) HRESULT {
-                return @as(*const IAudioClient.VTable, @ptrCast(self.__v)).Reset(@as(*IAudioClient, @ptrCast(self)));
-            }
-            pub inline fn SetEventHandle(self: *T, handle: HANDLE) HRESULT {
-                return @as(*const IAudioClient.VTable, @ptrCast(self.__v))
-                    .SetEventHandle(@as(*IAudioClient, @ptrCast(self)), handle);
-            }
-            pub inline fn GetService(self: *T, guid: *const GUID, iface: *?*anyopaque) HRESULT {
-                return @as(*const IAudioClient.VTable, @ptrCast(self.__v))
-                    .GetService(@as(*IAudioClient, @ptrCast(self)), guid, iface);
-            }
-        };
-    }
+    unknown: IUnknownInterface(@This()) = .{},
+    audio_client: IAudioClientInterface(@This()) = .{},
 
     pub const VTable = extern struct {
         base: IUnknown.VTable,
@@ -256,13 +268,8 @@ pub const IAudioClient = extern struct {
 pub const IAudioClient2 = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IAudioClient.Methods(T);
-        };
-    }
+    unknown: IUnknownInterface(@This()) = .{},
+    audio_client: IAudioClientInterface(@This()) = .{},
 
     pub const VTable = extern struct {
         base: IAudioClient.VTable,
@@ -276,13 +283,8 @@ pub const IAudioClient2 = extern struct {
 pub const IAudioClient3 = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IAudioClient2.Methods(T);
-        };
-    }
+    unknown: IUnknownInterface(@This()) = .{},
+    audio_client: IAudioClientInterface(@This()) = .{},
 
     pub const VTable = extern struct {
         base: IAudioClient2.VTable,
@@ -292,25 +294,26 @@ pub const IAudioClient3 = extern struct {
     };
 };
 
+pub fn IAudioRenderClientInterface(T: type) type {
+    return extern struct {
+        pub inline fn GetBuffer(self: *@This(), num_frames_requested: UINT32, data: ?*?[*]BYTE) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("audio_render_client", self));
+            return @as(*const IAudioRenderClient.VTable, @ptrCast(parent.__v))
+                .GetBuffer(@as(*IAudioRenderClient, @ptrCast(parent)), num_frames_requested, data);
+        }
+        pub inline fn ReleaseBuffer(self: *@This(), num_frames_written: UINT32, flags: DWORD) HRESULT {
+            const parent: *T = @alignCast(@fieldParentPtr("audio_render_client", self));
+            return @as(*const IAudioRenderClient.VTable, @ptrCast(parent.__v))
+                .ReleaseBuffer(@as(*IAudioRenderClient, @ptrCast(parent)), num_frames_written, flags);
+        }
+    };
+}
+
 pub const IAudioRenderClient = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-
-            pub inline fn GetBuffer(self: *T, num_frames_requested: UINT32, data: ?*?[*]BYTE) HRESULT {
-                return @as(*const IAudioRenderClient.VTable, @ptrCast(self.__v))
-                    .GetBuffer(@as(*IAudioRenderClient, @ptrCast(self)), num_frames_requested, data);
-            }
-            pub inline fn ReleaseBuffer(self: *T, num_frames_written: UINT32, flags: DWORD) HRESULT {
-                return @as(*const IAudioRenderClient.VTable, @ptrCast(self.__v))
-                    .ReleaseBuffer(@as(*IAudioRenderClient, @ptrCast(self)), num_frames_written, flags);
-            }
-        };
-    }
+    unknown: IUnknownInterface(@This()) = .{},
+    audio_render_client: IAudioRenderClientInterface(@This()) = .{},
 
     pub const VTable = extern struct {
         base: IUnknown.VTable,
