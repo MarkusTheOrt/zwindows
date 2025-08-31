@@ -54,44 +54,44 @@ pub extern "mfreadwrite" fn MFCreateSourceReaderFromURL(
     reader: **ISourceReader,
 ) callconv(WINAPI) HRESULT;
 
-pub fn IAttributesInterface(T: type) type {
-    return extern struct {
-        pub inline fn GetUINT32(self: *@This(), guid: *const GUID, value: *UINT32) HRESULT {
-            const parent: *T = @alignCast(@fieldParentPtr("attributes", self));
-            return @as(*const IAttributes.VTable, @ptrCast(parent.__v)).GetUINT32(
-                @as(*IAttributes, @ptrCast(parent)),
-                guid,
-                value,
-            );
-        }
-        pub inline fn GetGUID(self: *@This(), key: *const GUID, value: *GUID) HRESULT {
-            const parent: *T = @alignCast(@fieldParentPtr("attributes", self));
-            return @as(*const IAttributes.VTable, @ptrCast(parent.__v))
-                .GetGUID(@as(*IAttributes, @ptrCast(parent)), key, value);
-        }
-        pub inline fn SetUINT32(self: *@This(), guid: *const GUID, value: UINT32) HRESULT {
-            const parent: *T = @alignCast(@fieldParentPtr("attributes", self));
-            return @as(*const IAttributes.VTable, @ptrCast(parent.__v))
-                .SetUINT32(@as(*IAttributes, @ptrCast(parent)), guid, value);
-        }
-        pub inline fn SetGUID(self: *@This(), key: *const GUID, value: *const GUID) HRESULT {
-            const parent: *T = @alignCast(@fieldParentPtr("attributes", self));
-            return @as(*const IAttributes.VTable, @ptrCast(parent.__v))
-                .SetGUID(@as(*IAttributes, @ptrCast(parent)), key, value);
-        }
-        pub inline fn SetUnknown(self: *@This(), guid: *const GUID, unknown: ?*IUnknown) HRESULT {
-            const parent: *T = @alignCast(@fieldParentPtr("attributes", self));
-            return @as(*const IAttributes.VTable, @ptrCast(parent.__v))
-                .SetUnknown(@as(*IAttributes, @ptrCast(parent)), guid, unknown);
-        }
-    };
-}
-
 pub const IAttributes = extern struct {
     __v: *const VTable,
 
-    unknown: IUnknownInterface(@This()) = .{},
-    attributes: IAttributesInterface(@This()) = .{},
+    unknown: IUnknown.Interface(@This()) = .{},
+    attributes: IAttributes.Interface(@This()) = .{},
+
+    pub fn Interface(T: type) type {
+        return extern struct {
+            pub inline fn GetUINT32(self: *@This(), guid: *const GUID, value: *UINT32) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("attributes", self));
+                return @as(*const IAttributes.VTable, @ptrCast(parent.__v)).GetUINT32(
+                    @as(*IAttributes, @ptrCast(parent)),
+                    guid,
+                    value,
+                );
+            }
+            pub inline fn GetGUID(self: *@This(), key: *const GUID, value: *GUID) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("attributes", self));
+                return @as(*const IAttributes.VTable, @ptrCast(parent.__v))
+                    .GetGUID(@as(*IAttributes, @ptrCast(parent)), key, value);
+            }
+            pub inline fn SetUINT32(self: *@This(), guid: *const GUID, value: UINT32) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("attributes", self));
+                return @as(*const IAttributes.VTable, @ptrCast(parent.__v))
+                    .SetUINT32(@as(*IAttributes, @ptrCast(parent)), guid, value);
+            }
+            pub inline fn SetGUID(self: *@This(), key: *const GUID, value: *const GUID) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("attributes", self));
+                return @as(*const IAttributes.VTable, @ptrCast(parent.__v))
+                    .SetGUID(@as(*IAttributes, @ptrCast(parent)), key, value);
+            }
+            pub inline fn SetUnknown(self: *@This(), guid: *const GUID, unknown: ?*IUnknown) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("attributes", self));
+                return @as(*const IAttributes.VTable, @ptrCast(parent.__v))
+                    .SetUnknown(@as(*IAttributes, @ptrCast(parent)), guid, unknown);
+            }
+        };
+    }
 
     pub const VTable = extern struct {
         base: IUnknown.VTable,
@@ -127,10 +127,6 @@ pub const IAttributes = extern struct {
         CopyAllItems: *anyopaque,
     };
 };
-
-pub fn IMediaEventInterface(T: type) type {
-    return extern struct {};
-}
 
 pub const IMediaEvent = extern struct {
     __v: *const VTable,
@@ -176,44 +172,46 @@ pub const IMediaEvent = extern struct {
 pub const ISourceReader = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    source_reader: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-
             pub inline fn GetNativeMediaType(
-                self: *T,
+                self: *@This(),
                 stream_index: DWORD,
                 media_type_index: DWORD,
                 media_type: **IMediaType,
             ) HRESULT {
-                return @as(*const ISourceReader.VTable, @ptrCast(self.__v)).GetNativeMediaType(
-                    @as(*ISourceReader, @ptrCast(self)),
+                const parent: *T = @alignCast(@fieldParentPtr("source_reader", self));
+                return @as(*const ISourceReader.VTable, @ptrCast(parent.__v)).GetNativeMediaType(
+                    @as(*ISourceReader, @ptrCast(parent)),
                     stream_index,
                     media_type_index,
                     media_type,
                 );
             }
             pub inline fn GetCurrentMediaType(
-                self: *T,
+                self: *@This(),
                 stream_index: DWORD,
                 media_type: **IMediaType,
             ) HRESULT {
-                return @as(*const ISourceReader.VTable, @ptrCast(self.__v))
-                    .GetCurrentMediaType(@as(*ISourceReader, @ptrCast(self)), stream_index, media_type);
+                const parent: *T = @alignCast(@fieldParentPtr("source_reader", self));
+                return @as(*const ISourceReader.VTable, @ptrCast(parent.__v))
+                    .GetCurrentMediaType(@as(*ISourceReader, @ptrCast(parent)), stream_index, media_type);
             }
             pub inline fn SetCurrentMediaType(
-                self: *T,
+                self: *@This(),
                 stream_index: DWORD,
                 reserved: ?*DWORD,
                 media_type: *IMediaType,
             ) HRESULT {
-                return @as(*const ISourceReader.VTable, @ptrCast(self.__v))
-                    .SetCurrentMediaType(@as(*ISourceReader, @ptrCast(self)), stream_index, reserved, media_type);
+                const parent: *T = @alignCast(@fieldParentPtr("source_reader", self));
+                return @as(*const ISourceReader.VTable, @ptrCast(parent.__v))
+                    .SetCurrentMediaType(@as(*ISourceReader, @ptrCast(parent)), stream_index, reserved, media_type);
             }
             pub inline fn ReadSample(
-                self: *T,
+                self: *@This(),
                 stream_index: DWORD,
                 control_flags: SOURCE_READER_CONTROL_FLAG,
                 actual_stream_index: ?*DWORD,
@@ -221,8 +219,9 @@ pub const ISourceReader = extern struct {
                 timestamp: ?*LONGLONG,
                 sample: ?*?*ISample,
             ) HRESULT {
-                return @as(*const ISourceReader.VTable, @ptrCast(self.__v)).ReadSample(
-                    @as(*ISourceReader, @ptrCast(self)),
+                const parent: *T = @alignCast(@fieldParentPtr("source_reader", self));
+                return @as(*const ISourceReader.VTable, @ptrCast(parent.__v)).ReadSample(
+                    @as(*ISourceReader, @ptrCast(parent)),
                     stream_index,
                     control_flags,
                     actual_stream_index,
@@ -231,9 +230,10 @@ pub const ISourceReader = extern struct {
                     sample,
                 );
             }
-            pub inline fn SetCurrentPosition(self: *T, guid: *const GUID, prop: *const PROPVARIANT) HRESULT {
-                return @as(*const ISourceReader.VTable, @ptrCast(self.__v))
-                    .SetCurrentPosition(@as(*ISourceReader, @ptrCast(self)), guid, prop);
+            pub inline fn SetCurrentPosition(self: *@This(), guid: *const GUID, prop: *const PROPVARIANT) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("source_reader", self));
+                return @as(*const ISourceReader.VTable, @ptrCast(parent.__v))
+                    .SetCurrentPosition(@as(*ISourceReader, @ptrCast(parent)), guid, prop);
             }
         };
     }
@@ -264,13 +264,8 @@ pub const ISourceReader = extern struct {
 pub const IMediaType = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IAttributes.Methods(T);
-        };
-    }
+    unknown: IUnknown.Interface(@This()) = .{},
+    attributes: IAttributes.Interface(@This()) = .{},
 
     pub const VTable = extern struct {
         base: IAttributes.VTable,
@@ -285,19 +280,21 @@ pub const IMediaType = extern struct {
 pub const ISample = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    attributes: IAttributes.Interface(@This()) = .{},
+    sample: Interface(@This()) = .{},
 
-    fn Methods(comptime T: type) type {
+    fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IAttributes.Methods(T);
-
-            pub inline fn ConvertToContiguousBuffer(self: *T, buffer: **IMediaBuffer) HRESULT {
-                return @as(*const ISample.VTable, @ptrCast(self.__v))
-                    .ConvertToContiguousBuffer(@as(*ISample, @ptrCast(self)), buffer);
+            pub inline fn ConvertToContiguousBuffer(self: *@This(), buffer: **IMediaBuffer) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("sample", self));
+                return @as(*const ISample.VTable, @ptrCast(parent.__v))
+                    .ConvertToContiguousBuffer(@as(*ISample, @ptrCast(parent)), buffer);
             }
-            pub inline fn GetBufferByIndex(self: *T, index: DWORD, buffer: **IMediaBuffer) HRESULT {
-                return @as(*const ISample.VTable, @ptrCast(self.__v))
-                    .GetBufferByIndex(@as(*ISample, @ptrCast(self)), index, buffer);
+            pub inline fn GetBufferByIndex(self: *@This(), index: DWORD, buffer: **IMediaBuffer) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("sample", self));
+                return @as(*const ISample.VTable, @ptrCast(parent.__v))
+                    .GetBufferByIndex(@as(*ISample, @ptrCast(parent)), index, buffer);
             }
         };
     }
@@ -324,22 +321,24 @@ pub const ISample = extern struct {
 pub const IMediaBuffer = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    media_buffer: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-
-            pub inline fn Lock(self: *T, ptr: *[*]BYTE, max_len: ?*DWORD, current_len: ?*DWORD) HRESULT {
-                return @as(*const IMediaBuffer.VTable, @ptrCast(self.__v))
-                    .Lock(@as(*IMediaBuffer, @ptrCast(self)), ptr, max_len, current_len);
+            pub inline fn Lock(self: *@This(), ptr: *[*]BYTE, max_len: ?*DWORD, current_len: ?*DWORD) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("media_buffer", self));
+                return @as(*const IMediaBuffer.VTable, @ptrCast(parent.__v))
+                    .Lock(@as(*IMediaBuffer, @ptrCast(parent)), ptr, max_len, current_len);
             }
-            pub inline fn Unlock(self: *T) HRESULT {
-                return @as(*const IMediaBuffer.VTable, @ptrCast(self.__v)).Unlock(@as(*IMediaBuffer, @ptrCast(self)));
+            pub inline fn Unlock(self: *@This()) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("media_buffer", self));
+                return @as(*const IMediaBuffer.VTable, @ptrCast(parent.__v)).Unlock(@as(*IMediaBuffer, @ptrCast(parent)));
             }
-            pub inline fn GetCurrentLength(self: *T, length: *DWORD) HRESULT {
-                return @as(*const IMediaBuffer.VTable, @ptrCast(self.__v))
-                    .GetCurrentLength(@as(*IMediaBuffer, @ptrCast(self)), length);
+            pub inline fn GetCurrentLength(self: *@This(), length: *DWORD) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("media_buffer", self));
+                return @as(*const IMediaBuffer.VTable, @ptrCast(parent.__v))
+                    .GetCurrentLength(@as(*IMediaBuffer, @ptrCast(parent)), length);
             }
         };
     }
@@ -360,22 +359,22 @@ pub const IID_ISourceReaderCallback = GUID.parse("{deec8d99-fa1d-4d82-84c2-2c896
 pub const ISourceReaderCallback = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    source_reader_callback: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-
             pub inline fn OnReadSample(
-                self: *T,
+                self: *@This(),
                 status: HRESULT,
                 stream_index: DWORD,
                 stream_flags: SOURCE_READER_FLAG,
                 timestamp: LONGLONG,
                 sample: ?*ISample,
             ) HRESULT {
-                return @as(*const ISourceReaderCallback.VTable, @ptrCast(self.__v)).OnReadSample(
-                    @as(*ISourceReaderCallback, @ptrCast(self)),
+                const parent: *T = @alignCast(@fieldParentPtr("source_reader_callback", self));
+                return @as(*const ISourceReaderCallback.VTable, @ptrCast(parent.__v)).OnReadSample(
+                    @as(*ISourceReaderCallback, @ptrCast(parent)),
                     status,
                     stream_index,
                     stream_flags,
@@ -383,13 +382,15 @@ pub const ISourceReaderCallback = extern struct {
                     sample,
                 );
             }
-            pub inline fn OnFlush(self: *T, stream_index: DWORD) HRESULT {
-                return @as(*const ISourceReaderCallback.VTable, @ptrCast(self.__v))
-                    .OnFlush(@as(*ISourceReaderCallback, @ptrCast(self)), stream_index);
+            pub inline fn OnFlush(self: *@This(), stream_index: DWORD) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("source_reader_callback", self));
+                return @as(*const ISourceReaderCallback.VTable, @ptrCast(parent.__v))
+                    .OnFlush(@as(*ISourceReaderCallback, @ptrCast(parent)), stream_index);
             }
-            pub inline fn OnEvent(self: *T, stream_index: DWORD, event: *IMediaEvent) HRESULT {
-                return @as(*const ISourceReaderCallback.VTable, @ptrCast(self.__v))
-                    .OnEvent(@as(*ISourceReaderCallback, @ptrCast(self)), stream_index, event);
+            pub inline fn OnEvent(self: *@This(), stream_index: DWORD, event: *IMediaEvent) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("source_reader_callback", self));
+                return @as(*const ISourceReaderCallback.VTable, @ptrCast(parent.__v))
+                    .OnEvent(@as(*ISourceReaderCallback, @ptrCast(parent)), stream_index, event);
             }
         };
     }
