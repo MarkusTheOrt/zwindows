@@ -67,13 +67,7 @@ pub const PARAGRAPH_ALIGNMENT = enum(UINT) {
 pub const IFontCollection = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
-
-    pub fn Methods(comptime T: type) type {
-        return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-        };
-    }
+    unknown: IUnknown.Interface(@This()) = .{},
 
     pub const VTable = extern struct {
         base: IUnknown.VTable,
@@ -87,19 +81,20 @@ pub const IFontCollection = extern struct {
 pub const ITextFormat = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    text_format: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-
-            pub inline fn SetTextAlignment(self: *T, alignment: TEXT_ALIGNMENT) HRESULT {
-                return @as(*const ITextFormat.VTable, @ptrCast(self.__v))
-                    .SetTextAlignment(@as(*ITextFormat, @ptrCast(self)), alignment);
+            pub inline fn SetTextAlignment(self: *@This(), alignment: TEXT_ALIGNMENT) HRESULT {
+                const parent: *T = @alignCast(@fieldParentPtr("text_format", self));
+                return @as(*const ITextFormat.VTable, @ptrCast(parent.__v))
+                    .SetTextAlignment(@as(*ITextFormat, @ptrCast(parent)), alignment);
             }
             pub inline fn SetParagraphAlignment(self: *T, alignment: PARAGRAPH_ALIGNMENT) HRESULT {
-                return @as(*const ITextFormat.VTable, @ptrCast(self.__v))
-                    .SetParagraphAlignment(@as(*ITextFormat, @ptrCast(self)), alignment);
+                const parent: *T = @alignCast(@fieldParentPtr("text_format", self));
+                return @as(*const ITextFormat.VTable, @ptrCast(parent.__v))
+                    .SetParagraphAlignment(@as(*ITextFormat, @ptrCast(parent)), alignment);
             }
         };
     }
@@ -137,14 +132,13 @@ pub const ITextFormat = extern struct {
 pub const IFactory = extern struct {
     __v: *const VTable,
 
-    pub usingnamespace Methods(@This());
+    unknown: IUnknown.Interface(@This()) = .{},
+    factory: Interface(@This()) = .{},
 
-    pub fn Methods(comptime T: type) type {
+    pub fn Interface(comptime T: type) type {
         return extern struct {
-            pub usingnamespace IUnknown.Methods(T);
-
             pub inline fn CreateTextFormat(
-                self: *T,
+                self: *@This(),
                 font_family_name: LPCWSTR,
                 font_collection: ?*IFontCollection,
                 font_weight: FONT_WEIGHT,
@@ -154,8 +148,9 @@ pub const IFactory = extern struct {
                 locale_name: LPCWSTR,
                 text_format: *?*ITextFormat,
             ) HRESULT {
-                return @as(*const IFactory.VTable, @ptrCast(self.__v)).CreateTextFormat(
-                    @as(*IFactory, @ptrCast(self)),
+                const parent: *T = @alignCast(@fieldParentPtr("factory", self));
+                return @as(*const IFactory.VTable, @ptrCast(parent.__v)).CreateTextFormat(
+                    @as(*IFactory, @ptrCast(parent)),
                     font_family_name,
                     font_collection,
                     font_weight,

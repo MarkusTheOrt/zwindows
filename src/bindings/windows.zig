@@ -440,24 +440,6 @@ pub inline fn HIWORD(dword: DWORD) WORD {
 
 pub const IID_IUnknown = GUID.parse("{00000000-0000-0000-C000-000000000046}");
 
-pub fn IUnknownInterface(T: type) type {
-    return struct {
-        pub inline fn QueryInterface(self: *@This(), guid: *const GUID, outobj: ?*?*anyopaque) HRESULT {
-            const parent: *T = @alignCast(@fieldParentPtr("unknown", self));
-            return @as(*const IUnknown.VTable, @ptrCast(parent.__v))
-                .QueryInterface(@as(*IUnknown, @ptrCast(parent)), guid, outobj);
-        }
-        pub inline fn AddRef(self: *@This()) ULONG {
-            const parent: *T = @alignCast(@fieldParentPtr("unknown", self));
-            return @as(*const IUnknown.VTable, @ptrCast(parent.__v)).AddRef(@as(*IUnknown, @ptrCast(parent)));
-        }
-        pub inline fn Release(self: *@This()) ULONG {
-            const parent: *T = @alignCast(@fieldParentPtr("unknown", self));
-            return @as(*const IUnknown.VTable, @ptrCast(parent.__v)).Release(@as(*IUnknown, @ptrCast(parent)));
-        }
-    };
-}
-
 pub const IUnknown = extern struct {
     __v: *const VTable,
 
